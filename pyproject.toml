@@ -27,3 +27,10 @@ classifiers = [
 
 [project.scripts]
 easy-account = "easy_account.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v"
