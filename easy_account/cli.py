@@ -20,7 +20,33 @@ def main():
     )
 
     parser.add_argument(
-        "-v", "--verbose",
+        "month",
+        type=int,
+        choices=range(1, 13),
+        help="The month the amount was spent",
+    )
+
+    parser.add_argument(
+        "category",
+        type=str,
+        help="The category of the amount spent",
+    )
+
+    parser.add_argument(
+        "amount",
+        type=float,
+        help="Amount spent to add into account",
+    )
+
+    parser.add_argument(
+        "--comment",
+        type=str,
+        help="A comment to the cell regarding the amount spent",
+    )
+
+    parser.add_argument(
+        "-v",
+        "--verbose",
         action="store_true",
         help="Enable verbose output",
     )
@@ -36,14 +62,12 @@ def main():
     # Validate that the spreadsheet exists
     spreadsheet_path = Path(args.spreadsheet)
     if not spreadsheet_path.exists():
-        print(
-            f"Error: Spreadsheet '{args.spreadsheet}' not found.",
-            file=sys.stderr,
-        )
+        print(f"Error: Spreadsheet '{args.spreadsheet}' not found.", file=sys.stderr)
         sys.exit(1)
 
     if args.verbose:
         print(f"Processing spreadsheet: {spreadsheet_path.absolute()}")
+        print(f"Adding {args.amount} into category {args.category} for month {args.month}")
 
     # Placeholder: actual implementation would go here
     print(f"Processing banking accounts from: {args.spreadsheet}")
