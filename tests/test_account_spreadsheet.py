@@ -159,7 +159,12 @@ def test_account_multi_get_cell_month_category_user(multiuser_account):
     assert c.coordinate == "AH3"
 
 
-def test_account_multisheet(multisheet):
+def test_account_multisheet_valid_sheet(multisheet):
     multisheet.active_sheet = "multi users"
     c = multisheet.get_cell(month="janvier", category="foo", user="alice")
     assert c.coordinate == "B3"
+
+
+def test_account_multisheet_invalid_sheet(multisheet):
+    with pytest.raises(AssertionError):
+        multisheet.active_sheet = "invalid"
