@@ -25,6 +25,9 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+[project.optional-dependencies]
+test = ["pytest", "ipython", "ruff"]
+
 [project.scripts]
 easy-account = "easy_account.cli:main"
 
