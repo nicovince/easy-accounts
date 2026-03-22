@@ -168,3 +168,10 @@ def test_account_multisheet_valid_sheet(multisheet):
 def test_account_multisheet_invalid_sheet(multisheet):
     with pytest.raises(AssertionError):
         multisheet.active_sheet = "invalid"
+
+
+def test_account_add_entry(dummy_account):
+    c = dummy_account.get_cell(month="janvier", category="foo")
+    dummy_account.add_entry("janvier", "foo", 3.14, "pi")
+    assert c.value == "=3.14"
+    dummy_account.save()

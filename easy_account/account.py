@@ -24,6 +24,10 @@ class AccountSpreadsheet:
         assert value in self.wb.sheetnames
         self._active_sheet = value
 
+    def save(self):
+        """Save file to disk."""
+        self.wb.save(self.path)
+
     def get_sheet(self):
         """Get the requested sheet."""
         if self.active_sheet is None:
@@ -57,7 +61,7 @@ class AccountSpreadsheet:
         """Get the next month cell of the provided month cell"""
         assert month_cell.row == self.month_row
         nxt_cell = self.get_next_cell(month_cell)
-        while type(self.get_next_cell(nxt_cell)) == openpyxl.cell.cell.MergedCell:
+        while type(self.get_next_cell(nxt_cell)) is openpyxl.cell.cell.MergedCell:
             nxt_cell = self.get_next_cell(nxt_cell)
         return self.get_next_cell(nxt_cell)
 
@@ -79,3 +83,18 @@ class AccountSpreadsheet:
                         break
 
         return ws.cell(row=category_cell.row, column=column)
+
+    def add_entry(
+        self,
+        month: str,
+        category: str,
+        amount: float,
+        comment: str | None = None,
+        user: str | None = None,
+    ) -> None:
+        """Add an account entry."""
+        cell = self.get_cell(month, category, user)
+        if cell.value is None:
+            cell.value = f"={amount}"
+        else:
+            cell.value = cell.value + amount
