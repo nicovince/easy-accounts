@@ -3,8 +3,7 @@ from openpyxl import Workbook
 import pytest
 
 
-@pytest.fixture(scope="session")
-def generated_account(tmp_path_factory):
+def get_months():
     months = [
         "janvier",
         "fevrier",
@@ -18,12 +17,17 @@ def generated_account(tmp_path_factory):
         "novembre",
         "decembre",
     ]
+    return months
+
+
+@pytest.fixture(scope="session")
+def monouser_account(tmp_path_factory):
     categories = ["foo", "bar"]
     wb = Workbook()
     ws = wb.active
     col_month_offset = 2
     row_category_offset = 2
-    for idx, month in enumerate(months):
+    for idx, month in enumerate(get_months()):
         ws.cell(row=1, column=(col_month_offset + idx), value=month)
 
     for idx, category in enumerate(categories):
@@ -34,9 +38,36 @@ def generated_account(tmp_path_factory):
     return path
 
 
+@pytest.fixture(scope="session")
+def multiuser_account(tmp_path_factory):
+    users = ["alice", "bob", "shared"]
+    categories = ["foo", "bar"]
+    wb = Workbook()
+    ws = wb.active
+    col_month_offset = 2
+    row_category_offset = 3
+
+    for idx, month in enumerate(get_months()):
+        month_start_col = col_month_offset + idx * len(users)
+        month_end_col = col_month_offset + (idx + 1) * len(users) - 1
+        ws.cell(row=1, column=month_start_col, value=month)
+        ws.merge_cells(
+            start_row=1, start_column=month_start_col, end_row=1, end_column=month_end_col
+        )
+        for user_idx, user in enumerate(users):
+            ws.cell(row=2, column=(col_month_offset + idx * len(users) + user_idx), value=user)
+
+    for idx, category in enumerate(categories):
+        ws.cell(row=(row_category_offset + idx), column=1, value=category)
+
+    path = f"{tmp_path_factory.mktemp('data')}/multi_user_account.xlsx"
+    wb.save(path)
+    return AccountSpreadsheet(path)
+
+
 @pytest.fixture
-def dummy_account(generated_account):
-    return AccountSpreadsheet(generated_account)
+def dummy_account(monouser_account):
+    return AccountSpreadsheet(monouser_account)
 
 
 def test_account_constructor():
@@ -76,3 +107,12 @@ def test_account_get_cell_month_category_invalid_month(dummy_account):
 def test_account_get_cell_month_category_invalid_category(dummy_account):
     with pytest.raises(AssertionError):
         dummy_account.get_cell(month="janvier", category="pwet")
+
+
+def test_account_multi_get_month(multiuser_account):
+    c = multiuser_account.get_cell_month("janvier")
+    assert c.column_letter == "B"
+    c = multiuser_account.get_cell_month("fevrier")
+    assert c.column_letter == "E"
+    c = multiuser_account.get_cell_month("decembre")
+    assert c.column_letter == "AF"
