@@ -125,3 +125,19 @@ def test_account_multi_next_month(multiuser_account):
     c = multiuser_account.get_cell_month("decembre")
     cn = multiuser_account.get_next_month_cell(c)
     assert cn.column_letter == "AI"
+
+
+def test_account_multi_get_cell_month_category_user(multiuser_account):
+    c = multiuser_account.get_cell(month="janvier", category="foo", user="alice")
+    assert c.coordinate == "B3"
+    c = multiuser_account.get_cell(month="janvier", category="foo", user="bob")
+    assert c.coordinate == "C3"
+    c = multiuser_account.get_cell(month="janvier", category="foo", user="shared")
+    assert c.coordinate == "D3"
+
+    c = multiuser_account.get_cell(month="decembre", category="foo", user="alice")
+    assert c.coordinate == "AF3"
+    c = multiuser_account.get_cell(month="decembre", category="foo", user="bob")
+    assert c.coordinate == "AG3"
+    c = multiuser_account.get_cell(month="decembre", category="foo", user="shared")
+    assert c.coordinate == "AH3"

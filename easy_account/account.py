@@ -12,6 +12,7 @@ class AccountSpreadsheet:
         self.wb = openpyxl.load_workbook(self.path)
         self.category_column = "A"
         self.month_row = 1
+        self.user_row = 2
 
     def get_cell_category(self, category: str) -> Cell:
         """Get the cell for a matching category."""
@@ -44,9 +45,21 @@ class AccountSpreadsheet:
             nxt_cell = self.get_next_cell(nxt_cell)
         return self.get_next_cell(nxt_cell)
 
-    def get_cell(self, month: str, category: str) -> Cell:
+    def get_cell(self, month: str, category: str, user=None) -> Cell:
         """Get cell for matching month and category."""
         month_cell = self.get_cell_month(month)
+        column = month_cell.col_idx
         category_cell = self.get_cell_category(category)
         ws = self.wb.active
-        return ws.cell(row=category_cell.row, column=month_cell.col_idx)
+        if user is not None:
+            nxt_month = self.get_next_month_cell(month_cell)
+            user_range_start = f"{month_cell.column_letter}{self.user_row}"
+            user_range_end = f"{nxt_month.column_letter}{self.user_row}"
+            month_users_range = ws[user_range_start:user_range_end]
+            for row in month_users_range:
+                for user_cell in row:
+                    if user_cell.value == user:
+                        column = user_cell.col_idx
+                        break
+
+        return ws.cell(row=category_cell.row, column=column)
