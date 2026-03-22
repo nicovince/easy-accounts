@@ -12,10 +12,10 @@ def test_constructor():
 
 
 def test_account_get_row_from_category(dummy_account):
-    row = dummy_account.get_row_from_category("foo")
-    assert row == 2
+    cell = dummy_account.get_cell_category("foo")
+    assert cell.row == 2
 
 
 def test_account_invalid_category(dummy_account):
     with pytest.raises(AssertionError):
-        dummy_account.get_row_from_category("dsmfkj")
+        dummy_account.get_cell_category("dsmfkj")
