@@ -56,7 +56,7 @@ def monouser_account(tmp_path_factory):
     wb = Workbook()
     ws = wb.active
     fill_monouser_sheet(ws)
-    path = f"{tmp_path_factory.mktemp('data')}/simple_mono_account.xlsx"
+    path = f"{tmp_path_factory.mktemp('monoaccount')}/simple_mono_account.xlsx"
     wb.save(path)
     return path
 
@@ -66,7 +66,17 @@ def multiuser_account(tmp_path_factory):
     wb = Workbook()
     ws = wb.active
     fill_multiuser_sheet(ws)
-    path = f"{tmp_path_factory.mktemp('data')}/multi_user_account.xlsx"
+    path = f"{tmp_path_factory.mktemp('multiuser')}/multi_user_account.xlsx"
+    wb.save(path)
+    return AccountSpreadsheet(path)
+
+
+@pytest.fixture(scope="session")
+def multisheet(tmp_path_factory):
+    wb = Workbook()
+    ws = wb.create_sheet("multi users")
+    fill_multiuser_sheet(ws)
+    path = f"{tmp_path_factory.mktemp('multisheet')}/multi_sheet_account.xlsx"
     wb.save(path)
     return AccountSpreadsheet(path)
 
@@ -147,3 +157,9 @@ def test_account_multi_get_cell_month_category_user(multiuser_account):
     assert c.coordinate == "AG3"
     c = multiuser_account.get_cell(month="decembre", category="foo", user="shared")
     assert c.coordinate == "AH3"
+
+
+def test_account_multisheet(multisheet):
+    multisheet.active_sheet = "multi users"
+    c = multisheet.get_cell(month="janvier", category="foo", user="alice")
+    assert c.coordinate == "B3"

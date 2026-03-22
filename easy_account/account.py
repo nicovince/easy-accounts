@@ -13,13 +13,22 @@ class AccountSpreadsheet:
         self.category_column = "A"
         self.month_row = 1
         self.user_row = 2
+        self._active_sheet = None
 
-    def get_sheet(self, title=None):
+    @property
+    def active_sheet(self):
+        return self._active_sheet
+
+    @active_sheet.setter
+    def active_sheet(self, value):
+        assert value in self.wb.sheetnames
+        self._active_sheet = value
+
+    def get_sheet(self):
         """Get the requested sheet."""
-        if title is None:
+        if self.active_sheet is None:
             return self.wb.active
-        assert title in self.wb.sheetnames
-        return self.wb[title]
+        return self.wb[self.active_sheet]
 
     def get_cell_category(self, category: str) -> Cell:
         """Get the cell for a matching category."""
