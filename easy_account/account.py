@@ -2,6 +2,7 @@
 
 import openpyxl
 from openpyxl.cell.cell import Cell
+from openpyxl.comments import Comment
 
 
 class AccountSpreadsheet:
@@ -97,4 +98,9 @@ class AccountSpreadsheet:
         if cell.value is None:
             cell.value = f"={amount}"
         else:
-            cell.value = cell.value + amount
+            cell.value = f"{cell.value} + {amount}"
+        if comment is not None:
+            if cell.comment is not None:
+                cell.comment.text += f"\n{comment}"
+            else:
+                cell.comment = Comment(comment, "easy-account")

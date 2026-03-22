@@ -174,4 +174,8 @@ def test_account_add_entry(dummy_account):
     c = dummy_account.get_cell(month="janvier", category="foo")
     dummy_account.add_entry("janvier", "foo", 3.14, "pi")
     assert c.value == "=3.14"
+    assert c.comment.text == "pi"
+    dummy_account.add_entry("janvier", "foo", 3.14, "pi")
+    assert c.value == "=3.14 + 3.14"
+    assert c.comment.text == "pi\npi"
     dummy_account.save()
