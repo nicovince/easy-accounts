@@ -4,6 +4,7 @@ import argparse
 import importlib.metadata
 import sys
 from pathlib import Path
+from easy_account.account import AccountSpreadsheet
 
 
 def main():
@@ -20,9 +21,14 @@ def main():
     )
 
     parser.add_argument(
+        "sheet",
+        type=str,
+        help="The title of the sheet to edit",
+    )
+
+    parser.add_argument(
         "month",
-        type=int,
-        choices=range(1, 13),
+        type=str,
         help="The month the amount was spent",
     )
 
@@ -41,7 +47,15 @@ def main():
     parser.add_argument(
         "--comment",
         type=str,
+        default=None,
         help="A comment to the cell regarding the amount spent",
+    )
+
+    parser.add_argument(
+        "--user",
+        type=str,
+        default=None,
+        help="In case of multi-user account, the user who made the expanse",
     )
 
     parser.add_argument(
@@ -71,7 +85,14 @@ def main():
 
     # Placeholder: actual implementation would go here
     print(f"Processing banking accounts from: {args.spreadsheet}")
-    print("(This is a placeholder implementation)")
+    account = AccountSpreadsheet(args.spreadsheet)
+    account.active_sheet = args.sheet
+    if args.comment is not None:
+        comment = f"{args.amount} : {args.comment}"
+    else:
+        comment = None
+    account.add_entry(args.month, args.category, args.amount, comment, args.user)
+    account.save()
 
 
 if __name__ == "__main__":
