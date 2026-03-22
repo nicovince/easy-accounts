@@ -14,9 +14,16 @@ class AccountSpreadsheet:
         self.month_row = 1
         self.user_row = 2
 
+    def get_sheet(self, title=None):
+        """Get the requested sheet."""
+        if title is None:
+            return self.wb.active
+        assert title in self.wb.sheetnames
+        return self.wb[title]
+
     def get_cell_category(self, category: str) -> Cell:
         """Get the cell for a matching category."""
-        ws = self.wb.active
+        ws = self.get_sheet()
         categories = ws[self.category_column]
         for cell in categories:
             if cell.value == category:
@@ -25,7 +32,7 @@ class AccountSpreadsheet:
 
     def get_cell_month(self, month: str) -> Cell:
         """Return the cell for a matching month."""
-        ws = self.wb.active
+        ws = self.get_sheet()
         months = ws[self.month_row]
         for cell in months:
             if cell.value == month:
@@ -34,7 +41,7 @@ class AccountSpreadsheet:
 
     def get_next_cell(self, cell: Cell) -> Cell:
         """Get cell in the next column."""
-        ws = self.wb.active
+        ws = self.get_sheet()
         return ws.cell(row=cell.row, column=cell.column + 1)
 
     def get_next_month_cell(self, month_cell: Cell) -> Cell:
@@ -50,7 +57,7 @@ class AccountSpreadsheet:
         month_cell = self.get_cell_month(month)
         column = month_cell.col_idx
         category_cell = self.get_cell_category(category)
-        ws = self.wb.active
+        ws = self.get_sheet()
         if user is not None:
             nxt_month = self.get_next_month_cell(month_cell)
             user_range_start = f"{month_cell.column_letter}{self.user_row}"
