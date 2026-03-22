@@ -74,8 +74,8 @@ def multiuser_account(tmp_path_factory):
 @pytest.fixture(scope="session")
 def multisheet(tmp_path_factory):
     wb = Workbook()
-    ws = wb.create_sheet("multi users")
-    fill_multiuser_sheet(ws)
+    fill_multiuser_sheet(wb.create_sheet("multi users"))
+    fill_monouser_sheet(wb.create_sheet("mono user"))
     path = f"{tmp_path_factory.mktemp('multisheet')}/multi_sheet_account.xlsx"
     wb.save(path)
     return AccountSpreadsheet(path)
@@ -170,12 +170,16 @@ def test_account_multisheet_invalid_sheet(multisheet):
         multisheet.active_sheet = "invalid"
 
 
-def test_account_add_entry(dummy_account):
-    c = dummy_account.get_cell(month="janvier", category="foo")
-    dummy_account.add_entry("janvier", "foo", 3.14, "pi")
+def test_account_add_entry(multisheet):
+    multisheet.active_sheet = "multi users"
+    c = multisheet.get_cell(month="janvier", category="foo")
+    multisheet.add_entry("janvier", "foo", 3.14, "pi")
     assert c.value == "=3.14"
     assert c.comment.text == "pi"
-    dummy_account.add_entry("janvier", "foo", 3.14, "pi")
+    multisheet.add_entry("janvier", "foo", 3.14, "pi")
     assert c.value == "=3.14 + 3.14"
     assert c.comment.text == "pi\npi"
-    dummy_account.save()
+    c = multisheet.get_cell(month="fevrier", category="foo")
+    multisheet.add_entry("fevrier", "foo", 3615)
+    assert c.value == "=3615"
+    assert c.comment is None
