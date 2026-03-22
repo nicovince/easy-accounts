@@ -30,3 +30,10 @@ class AccountSpreadsheet:
             if cell.value == month:
                 return cell
         assert False, f"{month} not found in {self.path}"
+
+    def get_cell(self, month: str, category: str) -> Cell:
+        """Get cell for matching month and category."""
+        month_cell = self.get_cell_month(month)
+        category_cell = self.get_cell_category(category)
+        ws = self.wb.active
+        return ws.cell(row=category_cell.row, column=month_cell.col_idx)

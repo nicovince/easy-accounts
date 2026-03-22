@@ -61,3 +61,18 @@ def test_account_get_cell_month(dummy_account):
 def test_account_get_cell_month_invalid(dummy_account):
     with pytest.raises(AssertionError):
         dummy_account.get_cell_month("qmlfkj")
+
+
+def test_account_get_cell_month_category(dummy_account):
+    c = dummy_account.get_cell(month="janvier", category="foo")
+    assert c.coordinate == "B2"
+
+
+def test_account_get_cell_month_category_invalid_month(dummy_account):
+    with pytest.raises(AssertionError):
+        dummy_account.get_cell(month="pwet", category="foo")
+
+
+def test_account_get_cell_month_category_invalid_category(dummy_account):
+    with pytest.raises(AssertionError):
+        dummy_account.get_cell(month="janvier", category="pwet")
