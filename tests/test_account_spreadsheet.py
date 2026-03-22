@@ -20,30 +20,20 @@ def get_months():
     return months
 
 
-@pytest.fixture(scope="session")
-def monouser_account(tmp_path_factory):
-    categories = ["foo", "bar"]
-    wb = Workbook()
-    ws = wb.active
+def fill_monouser_sheet(ws):
     col_month_offset = 2
     row_category_offset = 2
+    categories = ["foo", "bar"]
     for idx, month in enumerate(get_months()):
         ws.cell(row=1, column=(col_month_offset + idx), value=month)
 
     for idx, category in enumerate(categories):
         ws.cell(row=(row_category_offset + idx), column=1, value=category)
 
-    path = f"{tmp_path_factory.mktemp('data')}/simple_mono_account.xlsx"
-    wb.save(path)
-    return path
 
-
-@pytest.fixture(scope="session")
-def multiuser_account(tmp_path_factory):
+def fill_multiuser_sheet(ws):
     users = ["alice", "bob", "shared"]
     categories = ["foo", "bar"]
-    wb = Workbook()
-    ws = wb.active
     col_month_offset = 2
     row_category_offset = 3
 
@@ -60,6 +50,22 @@ def multiuser_account(tmp_path_factory):
     for idx, category in enumerate(categories):
         ws.cell(row=(row_category_offset + idx), column=1, value=category)
 
+
+@pytest.fixture(scope="session")
+def monouser_account(tmp_path_factory):
+    wb = Workbook()
+    ws = wb.active
+    fill_monouser_sheet(ws)
+    path = f"{tmp_path_factory.mktemp('data')}/simple_mono_account.xlsx"
+    wb.save(path)
+    return path
+
+
+@pytest.fixture(scope="session")
+def multiuser_account(tmp_path_factory):
+    wb = Workbook()
+    ws = wb.active
+    fill_multiuser_sheet(ws)
     path = f"{tmp_path_factory.mktemp('data')}/multi_user_account.xlsx"
     wb.save(path)
     return AccountSpreadsheet(path)
