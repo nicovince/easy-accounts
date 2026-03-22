@@ -116,3 +116,12 @@ def test_account_multi_get_month(multiuser_account):
     assert c.column_letter == "E"
     c = multiuser_account.get_cell_month("decembre")
     assert c.column_letter == "AF"
+
+
+def test_account_multi_next_month(multiuser_account):
+    c = multiuser_account.get_cell_month("janvier")
+    cn = multiuser_account.get_next_month_cell(c)
+    assert cn.column_letter == "E"
+    c = multiuser_account.get_cell_month("decembre")
+    cn = multiuser_account.get_next_month_cell(c)
+    assert cn.column_letter == "AI"

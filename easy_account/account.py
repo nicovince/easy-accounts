@@ -31,6 +31,19 @@ class AccountSpreadsheet:
                 return cell
         assert False, f"{month} not found in {self.path}"
 
+    def get_next_cell(self, cell: Cell) -> Cell:
+        """Get cell in the next column."""
+        ws = self.wb.active
+        return ws.cell(row=cell.row, column=cell.column + 1)
+
+    def get_next_month_cell(self, month_cell: Cell) -> Cell:
+        """Get the next month cell of the provided month cell"""
+        assert month_cell.row == self.month_row
+        nxt_cell = self.get_next_cell(month_cell)
+        while type(self.get_next_cell(nxt_cell)) == openpyxl.cell.cell.MergedCell:
+            nxt_cell = self.get_next_cell(nxt_cell)
+        return self.get_next_cell(nxt_cell)
+
     def get_cell(self, month: str, category: str) -> Cell:
         """Get cell for matching month and category."""
         month_cell = self.get_cell_month(month)
