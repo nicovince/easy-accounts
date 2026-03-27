@@ -49,7 +49,73 @@ easy-account accounts.xlsx Sheet1 janvier groceries 100.0 -v
 
 ## Setup
 
-### Pre-commit Hooks
+### 1. Create Configuration File
+
+First, create a `.easy-account.toml` configuration file in the directory where you'll run the command:
+
+```bash
+easy-account --init
+```
+
+This creates an example configuration file with predefined months and categories. Edit it to match your needs:
+
+```toml
+# Easy Account Configuration
+[months]
+months = [
+    "janvier",
+    "fevrier",
+    "mars",
+    # ... add your months
+]
+
+[categories]
+categories = [
+    "groceries",
+    "utilities",
+    "rent",
+    # ... add your categories
+]
+
+[users]
+# Optional: list users for multi-user accounts
+users = [
+    "alice",
+    "bob",
+    "charlie",
+]
+```
+
+### 2. Set Up Autocompletion (Optional but Recommended)
+
+Enable shell autocompletion for bash/zsh:
+
+```bash
+eval "$(register-python-argcomplete easy-account)"
+```
+
+For **permanent** autocompletion, add the line above to your shell profile:
+
+**For Bash** (~/.bashrc or ~/.bash_profile):
+```bash
+eval "$(register-python-argcomplete easy-account)"
+```
+
+**For Zsh** (~/.zshrc):
+```bash
+eval "$(register-python-argcomplete easy-account)"
+```
+
+After adding to your shell profile, restart your terminal or run `source ~/.bashrc` (or `source ~/.zshrc`).
+
+Now you can use tab completion for month, category, and user arguments:
+```bash
+easy-account accounts.xlsx Sheet1 jan<TAB>  # auto-completes to janvier
+easy-account accounts.xlsx Sheet1 janvier gr<TAB>  # auto-completes to groceries
+easy-account accounts.xlsx Sheet1 janvier groceries 50 --user al<TAB>  # auto-completes to alice
+```
+
+### 3. Pre-commit Hooks
 
 To set up pre-commit hooks that automatically run linting and formatting checks on commit, run:
 

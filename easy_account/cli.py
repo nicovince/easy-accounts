@@ -5,6 +5,12 @@ import importlib.metadata
 import sys
 from pathlib import Path
 from easy_account.account import AccountSpreadsheet
+from easy_account.config import load_config, get_months, get_categories, get_users, ConfigError
+
+try:
+    import argcomplete
+except ImportError:
+    argcomplete = None  # type: ignore
 
 
 def main():
@@ -12,8 +18,47 @@ def main():
     parser = argparse.ArgumentParser(
         prog="easy-account",
         description="Fill banking accounts spreadsheet from the command line",
+        epilog="""
+Configuration:
+  This tool requires a .easy-account.toml file in the current directory.
+  Use 'easy-account --init' to create an example configuration file.
+
+Autocompletion:
+  To enable bash/zsh autocompletion, run:
+    eval "$(register-python-argcomplete easy-account)"
+  
+  For permanent autocompletion, add the above line to your shell profile (.bashrc, .zshrc, etc.)
+""",
+        formatter_class=argparse.RawTextHelpFormatter,
     )
 
+    parser.add_argument(
+        "--init",
+        action="store_true",
+        help="Create an example .easy-account.cfg configuration file",
+    )
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {importlib.metadata.version('easy-account')}",
+    )
+
+    # Handle --init flag early (before requiring positional arguments)
+    if "--init" in sys.argv:
+        args = parser.parse_args()
+        from easy_account.config import create_example_config
+
+        config_path = Path(".easy-account.toml")
+        if config_path.exists():
+            print(f"Configuration file already exists at {config_path.absolute()}")
+            sys.exit(1)
+        create_example_config(config_path)
+        print(f"Example configuration file created at {config_path.absolute()}")
+        print("Please edit it to match your needs and re-run the command.")
+        sys.exit(0)
+
+    # Add positional arguments
     parser.add_argument(
         "spreadsheet",
         type=str,
@@ -26,17 +71,31 @@ def main():
         help="The title of the sheet to edit",
     )
 
-    parser.add_argument(
+    # Try to load config for providing choices
+    try:
+        config = load_config()
+        months_choices = get_months(config)
+        categories_choices = get_categories(config)
+        users_choices = get_users(config)
+    except ConfigError:
+        # Config file doesn't exist yet, allow any input
+        months_choices = None
+        categories_choices = None
+        users_choices = None
+
+    month_arg = parser.add_argument(
         "month",
         type=str,
         help="The month the amount was spent",
     )
+    month_arg.completer = lambda prefix, parsed_args, **kwargs: months_choices or []  # type: ignore
 
-    parser.add_argument(
+    category_arg = parser.add_argument(
         "category",
         type=str,
         help="The category of the amount spent",
     )
+    category_arg.completer = lambda prefix, parsed_args, **kwargs: categories_choices or []  # type: ignore
 
     parser.add_argument(
         "amount",
@@ -52,12 +111,14 @@ def main():
         help="A comment to the cell regarding the amount spent",
     )
 
-    parser.add_argument(
+    user_arg = parser.add_argument(
         "--user",
         type=str,
         default=None,
         help="In case of multi-user account, the user who made the expanse",
     )
+    if users_choices:
+        user_arg.completer = lambda prefix, parsed_args, **kwargs: users_choices or []  # type: ignore
 
     parser.add_argument(
         "-v",
@@ -66,11 +127,9 @@ def main():
         help="Enable verbose output",
     )
 
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"%(prog)s {importlib.metadata.version('easy-account')}",
-    )
+    # Enable argcomplete if available
+    if argcomplete:
+        argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
 
