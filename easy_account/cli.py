@@ -41,7 +41,8 @@ def main():
     parser.add_argument(
         "amount",
         type=float,
-        help="Amount spent to add into account",
+        nargs="+",
+        help="Amount(s) spent to add into account",
     )
 
     parser.add_argument(
@@ -81,14 +82,16 @@ def main():
 
     if args.verbose:
         print(f"Processing spreadsheet: {spreadsheet_path.absolute()}")
-        print(f"Adding {args.amount} into category {args.category} for month {args.month}")
+        amounts_str = " + ".join(str(a) for a in args.amount)
+        print(f"Adding {amounts_str} into category {args.category} for month {args.month}")
 
     # Placeholder: actual implementation would go here
     print(f"Processing banking accounts from: {args.spreadsheet}")
     account = AccountSpreadsheet(args.spreadsheet)
     account.active_sheet = args.sheet
     if args.comment is not None:
-        comment = f"{args.amount} : {args.comment}"
+        amounts_str = " + ".join(str(a) for a in args.amount)
+        comment = f"{amounts_str} : {args.comment}"
     else:
         comment = None
     account.add_entry(args.month, args.category, args.amount, comment, args.user)

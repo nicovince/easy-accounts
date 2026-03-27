@@ -183,3 +183,39 @@ def test_account_add_entry(multisheet):
     multisheet.add_entry("fevrier", "foo", 3615)
     assert c.value == "=3615"
     assert c.comment is None
+
+
+def test_account_add_entry_with_list_empty_cell(multisheet):
+    """Test adding a list of floats to an empty cell."""
+    multisheet.active_sheet = "mono user"
+    c = multisheet.get_cell(month="janvier", category="foo")
+    multisheet.add_entry("janvier", "foo", [1.0, 2.0, 3.0])
+    assert c.value == "=1.0 + 2.0 + 3.0"
+    assert c.comment is None
+
+
+def test_account_add_entry_with_list_existing_cell(multisheet):
+    """Test adding a list of floats to an existing cell."""
+    multisheet.active_sheet = "mono user"
+    c = multisheet.get_cell(month="mars", category="foo")
+    multisheet.add_entry("mars", "foo", [1.0, 2.0])
+    assert c.value == "=1.0 + 2.0"
+    multisheet.add_entry("mars", "foo", [3.0, 4.0])
+    assert c.value == "=1.0 + 2.0 + 3.0 + 4.0"
+
+
+def test_account_add_entry_with_list_and_comment(multisheet):
+    """Test adding a list of floats with a comment."""
+    multisheet.active_sheet = "mono user"
+    c = multisheet.get_cell(month="avril", category="foo")
+    multisheet.add_entry("avril", "foo", [5.5, 4.5], "mixed")
+    assert c.value == "=5.5 + 4.5"
+    assert c.comment.text == "mixed"
+
+
+def test_account_add_entry_with_single_float_in_list(multisheet):
+    """Test adding a single float in a list."""
+    multisheet.active_sheet = "mono user"
+    c = multisheet.get_cell(month="mai", category="foo")
+    multisheet.add_entry("mai", "foo", [10.0])
+    assert c.value == "=10.0"

@@ -89,16 +89,26 @@ class AccountSpreadsheet:
         self,
         month: str,
         category: str,
-        amount: float,
+        amount: float | int | list[float] | list[int],
         comment: str | None = None,
         user: str | None = None,
     ) -> None:
         """Add an account entry."""
         cell = self.get_cell(month, category, user)
-        if cell.value is None:
-            cell.value = f"={amount}"
+
+        # Convert amount to list if it's a single float/int
+        if isinstance(amount, (float, int)):
+            amounts = [amount]
         else:
-            cell.value = f"{cell.value} + {amount}"
+            amounts = amount
+
+        # Build the amount string: "a + b + c + d"
+        amount_str = " + ".join(str(a) for a in amounts)
+
+        if cell.value is None:
+            cell.value = f"={amount_str}"
+        else:
+            cell.value = f"{cell.value} + {amount_str}"
         if comment is not None:
             if cell.comment is not None:
                 cell.comment.text += f"\n{comment}"
