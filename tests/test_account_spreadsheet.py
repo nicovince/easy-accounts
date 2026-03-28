@@ -219,3 +219,47 @@ def test_account_add_entry_with_single_float_in_list(multisheet):
     c = multisheet.get_cell(month="mai", category="foo")
     multisheet.add_entry("mai", "foo", [10.0])
     assert c.value == "=10.0"
+
+
+class TestAccountSpreadsheetHelpers:
+    """Tests for AccountSpreadsheet helper methods."""
+
+    def test_get_spreadsheet_months_monouser(self, dummy_account):
+        """Test getting months from monouser spreadsheet."""
+        months = dummy_account.get_spreadsheet_months()
+        assert "janvier" in months
+        assert "decembre" in months
+        assert len(months) == 11
+
+    def test_get_spreadsheet_months_multiuser(self, multiuser_account):
+        """Test getting months from multiuser spreadsheet."""
+        months = multiuser_account.get_spreadsheet_months()
+        assert "janvier" in months
+        assert "decembre" in months
+        assert len(months) == 11
+
+    def test_get_spreadsheet_categories(self, dummy_account):
+        """Test getting categories from spreadsheet."""
+        categories = dummy_account.get_spreadsheet_categories()
+        assert "foo" in categories
+        assert "bar" in categories
+
+    def test_get_spreadsheet_users_monouser(self, dummy_account):
+        """Test that monouser spreadsheet returns empty user list."""
+        users = dummy_account.get_spreadsheet_users()
+        assert users == []
+
+    def test_get_spreadsheet_users_multiuser(self, multiuser_account):
+        """Test getting users from multiuser spreadsheet."""
+        users = multiuser_account.get_spreadsheet_users()
+        assert "alice" in users
+        assert "bob" in users
+        assert "shared" in users
+
+    def test_is_multiuser_monouser(self, dummy_account):
+        """Test that monouser spreadsheet is correctly identified."""
+        assert dummy_account.is_multiuser() is False
+
+    def test_is_multiuser_multiuser(self, multiuser_account):
+        """Test that multiuser spreadsheet is correctly identified."""
+        assert multiuser_account.is_multiuser() is True

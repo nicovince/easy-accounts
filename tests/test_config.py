@@ -7,12 +7,17 @@ import pytest
 
 from easy_account.config import (
     ConfigError,
+    ConfigValidationError,
+    create_config_from_spreadsheet,
     create_example_config,
     find_config_file,
     get_categories,
     get_months,
     get_users,
+    get_spreadsheet_users,
+    is_multiuser_spreadsheet,
     load_config,
+    validate_config_against_spreadsheet,
 )
 
 
@@ -190,3 +195,149 @@ users = ["john", "jane", "jack"]
     users = get_users(config)
 
     assert users == ["john", "jane", "jack"]
+
+
+class TestIsMultiuserSpreadsheet:
+    """Tests for is_multiuser_spreadsheet function."""
+
+    def test_monouser_spreadsheet(self, monouser_account):
+        """Test that monouser spreadsheet is correctly identified."""
+        assert is_multiuser_spreadsheet(monouser_account) is False
+
+    def test_multiuser_spreadsheet(self, multiuser_account_fixture):
+        """Test that multiuser spreadsheet is correctly identified."""
+        assert is_multiuser_spreadsheet(multiuser_account_fixture) is True
+
+
+class TestGetSpreadsheetUsers:
+    """Tests for get_spreadsheet_users function."""
+
+    def test_monouser_spreadsheet_returns_empty(self, fresh_monouser_account):
+        """Test that monouser spreadsheet returns empty user list."""
+        users = get_spreadsheet_users(fresh_monouser_account)
+        assert users == []
+
+    def test_multiuser_spreadsheet_returns_users(self, fresh_multiuser_account):
+        """Test that multiuser spreadsheet returns correct users."""
+        users = get_spreadsheet_users(fresh_multiuser_account)
+        assert "alice" in users
+        assert "bob" in users
+        assert "shared" in users
+
+
+class TestValidateConfigAgainstSpreadsheet:
+    """Tests for validate_config_against_spreadsheet function."""
+
+    def test_valid_config_no_errors(self, tmp_path, monouser_account):
+        """Test that valid config entries do not generate errors."""
+        config_path = tmp_path / ".easy-account.toml"
+        config_content = """
+[months]
+months = ["janvier", "fevrier", "mars"]
+
+[categories]
+categories = ["foo", "bar"]
+"""
+        config_path.write_text(config_content)
+        config = load_config(config_path)
+        validate_config_against_spreadsheet(config, monouser_account)
+
+    def test_invalid_month_returns_error(self, tmp_path, monouser_account):
+        """Test that invalid month entry returns error."""
+        config_path = tmp_path / ".easy-account.toml"
+        config_content = """
+[months]
+months = ["invalid_month"]
+
+[categories]
+categories = ["foo"]
+"""
+        config_path.write_text(config_content)
+        config = load_config(config_path)
+        with pytest.raises(ConfigValidationError, match="invalid_month"):
+            validate_config_against_spreadsheet(config, monouser_account)
+
+    def test_invalid_category_returns_error(self, tmp_path, monouser_account):
+        """Test that invalid category entry returns error."""
+        config_path = tmp_path / ".easy-account.toml"
+        config_content = """
+[months]
+months = ["janvier"]
+
+[categories]
+categories = ["invalid_category"]
+"""
+        config_path.write_text(config_content)
+        config = load_config(config_path)
+        with pytest.raises(ConfigValidationError, match="invalid_category"):
+            validate_config_against_spreadsheet(config, monouser_account)
+
+    def test_invalid_user_returns_error(self, tmp_path, multiuser_account_fixture):
+        """Test that invalid user entry returns error."""
+        config_path = tmp_path / ".easy-account.toml"
+        config_content = """
+[months]
+months = ["janvier"]
+
+[categories]
+categories = ["foo"]
+
+[users]
+users = ["invalid_user"]
+"""
+        config_path.write_text(config_content)
+        config = load_config(config_path)
+        with pytest.raises(ConfigValidationError, match="invalid_user"):
+            validate_config_against_spreadsheet(config, multiuser_account_fixture)
+
+    def test_valid_user_no_error(self, tmp_path, multiuser_account_fixture):
+        """Test that valid user entries do not generate errors."""
+        config_path = tmp_path / ".easy-account.toml"
+        config_content = """
+[months]
+months = ["janvier"]
+
+[categories]
+categories = ["foo"]
+
+[users]
+users = ["alice", "bob", "shared"]
+"""
+        config_path.write_text(config_content)
+        config = load_config(config_path)
+        validate_config_against_spreadsheet(config, multiuser_account_fixture)
+
+
+class TestCreateConfigFromSpreadsheet:
+    """Tests for create_config_from_spreadsheet function."""
+
+    def test_create_config_from_monouser_spreadsheet(self, tmp_path, monouser_account):
+        """Test creating config from monouser spreadsheet (no users section)."""
+        config_path = tmp_path / ".easy-account.toml"
+        create_config_from_spreadsheet(monouser_account, output_path=config_path)
+
+        assert config_path.exists()
+        config = load_config(config_path)
+        months = get_months(config)
+        categories = get_categories(config)
+        users = get_users(config)
+
+        assert "janvier" in months
+        assert "foo" in categories
+        assert users == []
+
+    def test_create_config_from_multiuser_spreadsheet(self, tmp_path, multiuser_account_fixture):
+        """Test creating config from multiuser spreadsheet (includes users section)."""
+        config_path = tmp_path / ".easy-account.toml"
+        create_config_from_spreadsheet(multiuser_account_fixture, output_path=config_path)
+
+        assert config_path.exists()
+        config = load_config(config_path)
+        months = get_months(config)
+        categories = get_categories(config)
+        users = get_users(config)
+
+        assert "janvier" in months
+        assert "foo" in categories
+        assert "alice" in users
+        assert "bob" in users

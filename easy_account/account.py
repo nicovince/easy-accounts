@@ -114,3 +114,75 @@ class AccountSpreadsheet:
                 cell.comment.text += f"\n{comment}"
             else:
                 cell.comment = Comment(comment, "easy-account")
+
+    def get_spreadsheet_months(self) -> list[str]:
+        """Get list of months from spreadsheet.
+
+        Returns:
+            List of month names found in the spreadsheet.
+        """
+        ws = self.get_sheet()
+        months: list[str] = []
+        for cell in ws[1]:
+            if cell.value and not isinstance(cell, openpyxl.cell.cell.MergedCell):
+                months.append(str(cell.value))
+        return months
+
+    def get_spreadsheet_categories(self) -> list[str]:
+        """Get list of categories from spreadsheet.
+
+        Returns:
+            List of category names found in the spreadsheet.
+        """
+        ws = self.get_sheet()
+        categories: list[str] = []
+        for cell in ws["A"]:
+            if cell.value:
+                categories.append(str(cell.value))
+        return categories
+
+    def get_spreadsheet_users(self) -> list[str]:
+        """Get list of users from spreadsheet.
+
+        Returns:
+            List of user names found in the spreadsheet, or empty list if no users.
+        """
+        ws = self.get_sheet()
+        users: set[str] = set()
+        month_columns: set[int] = set()
+
+        for cell in ws[1]:
+            if isinstance(cell, openpyxl.cell.cell.MergedCell):
+                continue
+            if cell.value:
+                month_columns.add(cell.column)
+                for merged_range in ws.merged_cells.ranges:
+                    if (
+                        merged_range.min_row <= 1 <= merged_range.max_row
+                        and merged_range.min_col <= cell.column <= merged_range.max_col
+                    ):
+                        for col in range(merged_range.min_col, merged_range.max_col + 1):
+                            month_columns.add(col)
+                        break
+
+        for row in ws.iter_rows(min_row=2, max_row=2):
+            for cell in row:
+                if (
+                    cell.column in month_columns
+                    and cell.value
+                    and not isinstance(cell, openpyxl.cell.cell.MergedCell)
+                ):
+                    users.add(str(cell.value))
+        return list(users)
+
+    def is_multiuser(self) -> bool:
+        """Check if spreadsheet is multi-user based on merged cells in month row.
+
+        Returns:
+            True if spreadsheet has merged cells in the month row (multi-user).
+        """
+        ws = self.get_sheet()
+        for merged_range in ws.merged_cells.ranges:
+            if merged_range.min_row == 1 and merged_range.max_row == 1:
+                return True
+        return False

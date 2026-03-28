@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+from easy_account.account import AccountSpreadsheet
+
 # Use tomllib for Python 3.11+ or tomli for older versions
 try:
     import tomllib
@@ -11,6 +13,12 @@ except ImportError:
 
 class ConfigError(Exception):
     """Raised when there's an error with the configuration."""
+
+    pass
+
+
+class ConfigValidationError(Exception):
+    """Raised when config entries don't match the spreadsheet."""
 
     pass
 
@@ -191,3 +199,121 @@ users = [
 """
     with open(path, "w") as f:
         f.write(example_config)
+
+
+def validate_config_against_spreadsheet(
+    config: dict,
+    spreadsheet_path: str,
+    sheet_name: str | None = None,
+) -> None:
+    """Validate that config entries exist in the spreadsheet.
+
+    Args:
+        config: Configuration dictionary.
+        spreadsheet_path: Path to the spreadsheet file.
+        sheet_name: Optional sheet name to validate against.
+
+    Raises:
+        ConfigValidationError: If any config entry doesn't exist in the spreadsheet.
+    """
+    account = AccountSpreadsheet(spreadsheet_path)
+    if sheet_name:
+        account.active_sheet = sheet_name
+
+    errors = []
+
+    months = get_months(config)
+    spreadsheet_months = set(account.get_spreadsheet_months())
+    for month in months:
+        if month not in spreadsheet_months:
+            errors.append(f"Month '{month}' not found in spreadsheet")
+
+    categories = get_categories(config)
+    spreadsheet_categories = set(account.get_spreadsheet_categories())
+    for category in categories:
+        if category not in spreadsheet_categories:
+            errors.append(f"Category '{category}' not found in spreadsheet")
+
+    users = get_users(config)
+    if users:
+        spreadsheet_users = set(account.get_spreadsheet_users())
+        for user in users:
+            if user not in spreadsheet_users:
+                errors.append(f"User '{user}' not found in spreadsheet")
+
+    if errors:
+        raise ConfigValidationError("\n".join(errors))
+
+
+def get_spreadsheet_users(spreadsheet_path: str, sheet_name: str | None = None) -> list[str]:
+    """Get list of users from spreadsheet.
+
+    Args:
+        spreadsheet_path: Path to the spreadsheet file.
+        sheet_name: Optional sheet name to extract from.
+
+    Returns:
+        List of user names found in the spreadsheet, or empty list if no users.
+    """
+    account = AccountSpreadsheet(spreadsheet_path)
+    if sheet_name:
+        account.active_sheet = sheet_name
+    return account.get_spreadsheet_users()
+
+
+def is_multiuser_spreadsheet(spreadsheet_path: str, sheet_name: str | None = None) -> bool:
+    """Check if spreadsheet is multi-user based on merged cells in the month row.
+
+    Args:
+        spreadsheet_path: Path to the spreadsheet file.
+        sheet_name: Optional sheet name to check.
+
+    Returns:
+        True if spreadsheet has merged cells in the month row (multi-user).
+    """
+    account = AccountSpreadsheet(spreadsheet_path)
+    if sheet_name:
+        account.active_sheet = sheet_name
+    return account.is_multiuser()
+
+
+def create_config_from_spreadsheet(
+    spreadsheet_path: str,
+    sheet_name: str | None = None,
+    output_path: Path = Path(".easy-account.toml"),
+) -> None:
+    """Create a configuration file from an existing spreadsheet.
+
+    Args:
+        spreadsheet_path: Path to the spreadsheet file.
+        sheet_name: Optional sheet name to extract from.
+        output_path: Path where to create the config file.
+    """
+    account = AccountSpreadsheet(spreadsheet_path)
+    if sheet_name:
+        account.active_sheet = sheet_name
+
+    months = account.get_spreadsheet_months()
+    categories = account.get_spreadsheet_categories()
+    users = account.get_spreadsheet_users() if account.is_multiuser() else []
+
+    config_lines = ["# Easy Account Configuration\n"]
+
+    config_lines.append("[months]\nmonths = [\n")
+    for month in months:
+        config_lines.append(f'    "{month}",\n')
+    config_lines.append("]\n\n")
+
+    config_lines.append("[categories]\ncategories = [\n")
+    for category in categories:
+        config_lines.append(f'    "{category}",\n')
+    config_lines.append("]\n")
+
+    if users:
+        config_lines.append("\n[users]\nusers = [\n")
+        for user in users:
+            config_lines.append(f'    "{user}",\n')
+        config_lines.append("]\n")
+
+    with open(output_path, "w") as f:
+        f.writelines(config_lines)
