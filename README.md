@@ -54,7 +54,7 @@ easy-account accounts.xlsx Sheet1 janvier groceries 100.0 -v
 First, create a `.easy-account.toml` configuration file in the directory where you'll run the command:
 
 ```bash
-easy-account --init
+easy-account --init [spreadsheet.xlsx]
 ```
 
 This creates an example configuration file with predefined months and categories. Edit it to match your needs:
