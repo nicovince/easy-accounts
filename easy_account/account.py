@@ -123,7 +123,7 @@ class AccountSpreadsheet:
         """
         ws = self.get_sheet()
         months: list[str] = []
-        for cell in ws[1]:
+        for cell in ws[self.month_row]:
             if cell.value and not isinstance(cell, openpyxl.cell.cell.MergedCell):
                 months.append(str(cell.value))
         return months
@@ -136,7 +136,7 @@ class AccountSpreadsheet:
         """
         ws = self.get_sheet()
         categories: list[str] = []
-        for cell in ws["A"]:
+        for cell in ws[self.category_column]:
             if cell.value:
                 categories.append(str(cell.value))
         return categories
@@ -151,7 +151,7 @@ class AccountSpreadsheet:
         users: set[str] = set()
         month_columns: set[int] = set()
 
-        for cell in ws[1]:
+        for cell in ws[self.month_row]:
             if isinstance(cell, openpyxl.cell.cell.MergedCell):
                 continue
             if cell.value:
@@ -165,7 +165,7 @@ class AccountSpreadsheet:
                             month_columns.add(col)
                         break
 
-        for row in ws.iter_rows(min_row=2, max_row=2):
+        for row in ws.iter_rows(min_row=self.user_row, max_row=self.user_row):
             for cell in row:
                 if (
                     cell.column in month_columns
