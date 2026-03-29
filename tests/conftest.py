@@ -14,7 +14,7 @@ if str(project_root) not in sys.path:
 os.chdir(project_root)
 
 
-def fill_monouser_sheet(ws):
+def get_months():
     months = [
         "janvier",
         "fevrier",
@@ -28,6 +28,11 @@ def fill_monouser_sheet(ws):
         "novembre",
         "decembre",
     ]
+    return months
+
+
+def fill_monouser_sheet(ws):
+    months = get_months()
     col_month_offset = 2
     row_category_offset = 2
     categories = ["foo", "bar"]
@@ -43,19 +48,7 @@ def fill_multiuser_sheet(ws):
     categories = ["foo", "bar"]
     col_month_offset = 2
     row_category_offset = 3
-    months = [
-        "janvier",
-        "fevrier",
-        "mars",
-        "avril",
-        "mai",
-        "juin",
-        "aout",
-        "septembre",
-        "octobre",
-        "novembre",
-        "decembre",
-    ]
+    months = get_months()
     for idx, month in enumerate(months):
         month_start_col = col_month_offset + idx * len(users)
         month_end_col = col_month_offset + (idx + 1) * len(users) - 1

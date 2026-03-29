@@ -1,71 +1,14 @@
 from easy_account.account import AccountSpreadsheet
 from openpyxl import Workbook
+import conftest
 import pytest
-
-
-def get_months():
-    months = [
-        "janvier",
-        "fevrier",
-        "mars",
-        "avril",
-        "mai",
-        "juin",
-        "aout",
-        "septembre",
-        "octobre",
-        "novembre",
-        "decembre",
-    ]
-    return months
-
-
-def fill_monouser_sheet(ws):
-    col_month_offset = 2
-    row_category_offset = 2
-    categories = ["foo", "bar"]
-    for idx, month in enumerate(get_months()):
-        ws.cell(row=1, column=(col_month_offset + idx), value=month)
-
-    for idx, category in enumerate(categories):
-        ws.cell(row=(row_category_offset + idx), column=1, value=category)
-
-
-def fill_multiuser_sheet(ws):
-    users = ["alice", "bob", "shared"]
-    categories = ["foo", "bar"]
-    col_month_offset = 2
-    row_category_offset = 3
-
-    for idx, month in enumerate(get_months()):
-        month_start_col = col_month_offset + idx * len(users)
-        month_end_col = col_month_offset + (idx + 1) * len(users) - 1
-        ws.cell(row=1, column=month_start_col, value=month)
-        ws.merge_cells(
-            start_row=1, start_column=month_start_col, end_row=1, end_column=month_end_col
-        )
-        for user_idx, user in enumerate(users):
-            ws.cell(row=2, column=(col_month_offset + idx * len(users) + user_idx), value=user)
-
-    for idx, category in enumerate(categories):
-        ws.cell(row=(row_category_offset + idx), column=1, value=category)
-
-
-@pytest.fixture(scope="session")
-def monouser_account(tmp_path_factory):
-    wb = Workbook()
-    ws = wb.active
-    fill_monouser_sheet(ws)
-    path = f"{tmp_path_factory.mktemp('monoaccount')}/simple_mono_account.xlsx"
-    wb.save(path)
-    return path
 
 
 @pytest.fixture(scope="session")
 def multiuser_account(tmp_path_factory):
     wb = Workbook()
     ws = wb.active
-    fill_multiuser_sheet(ws)
+    conftest.fill_multiuser_sheet(ws)
     path = f"{tmp_path_factory.mktemp('multiuser')}/multi_user_account.xlsx"
     wb.save(path)
     return AccountSpreadsheet(path)
@@ -74,8 +17,8 @@ def multiuser_account(tmp_path_factory):
 @pytest.fixture(scope="session")
 def multisheet(tmp_path_factory):
     wb = Workbook()
-    fill_multiuser_sheet(wb.create_sheet("multi users"))
-    fill_monouser_sheet(wb.create_sheet("mono user"))
+    conftest.fill_multiuser_sheet(wb.create_sheet("multi users"))
+    conftest.fill_monouser_sheet(wb.create_sheet("mono user"))
     path = f"{tmp_path_factory.mktemp('multisheet')}/multi_sheet_account.xlsx"
     wb.save(path)
     return AccountSpreadsheet(path)
