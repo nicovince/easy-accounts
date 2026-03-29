@@ -39,16 +39,20 @@ class Spreadsheet:
             return int(s)
         return float(s)
 
+    @staticmethod
+    def is_token_simple(token):
+        return (
+            (token.type, token.subtype) == ("OPERAND", "NUMBER")
+            or (token.type, token.subtype) == ("OPERATOR-INFIX", "")
+            or (token.type, token.subtype) == ("LITERAL", "")
+            or False
+        )
+
     def evaluate(self, sheet_name: str, col: str, row: int):
         cell_val = self.get_sheet(sheet_name)[f"{col}{row}"].value
         tokens = Tokenizer(cell_val)
-        if len(tokens.items) == 1:
-            return self.from_str(tokens.items[0].value)
-
         op = ""
         for t in tokens.items:
-            if (t.type, t.subtype) == ("OPERAND", "NUMBER"):
-                op += f"{t.value}"
-            elif (t.type, t.subtype) == ("OPERATOR-INFIX", ""):
+            if self.is_token_simple(t):
                 op += f"{t.value}"
         return eval(op)
