@@ -33,8 +33,14 @@ class Spreadsheet:
     def get_cell_value(self, sheet_name: str, col: str, row: int):
         return self.get_sheet(sheet_name)[f"{col}{row}"].value
 
+    @staticmethod
+    def from_str(s: str):
+        if s.isdecimal():
+            return int(s)
+        return float(s)
+
     def evaluate(self, sheet_name: str, col: str, row: int):
         cell_val = self.get_sheet(sheet_name)[f"{col}{row}"].value
         tokens = Tokenizer(cell_val)
         if len(tokens.items) == 1:
-            return int(cell_val)
+            return self.from_str(tokens.items[0].value)

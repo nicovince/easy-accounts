@@ -32,3 +32,24 @@ def test_spreadsheet_evaluate_no_formula_int(sample_spreadsheet):
     ws["A1"] = "5"
     val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
     assert val == 5
+
+
+def test_spreadsheet_evaluate_no_formula_float(sample_spreadsheet):
+    ws = sample_spreadsheet.get_sheet("Sheet1")
+    ws["A1"] = "5.2"
+    val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
+    assert val == 5.2
+
+
+def test_spreadsheet_evaluate_formula_int(sample_spreadsheet):
+    ws = sample_spreadsheet.get_sheet("Sheet1")
+    ws["A1"] = "=3"
+    val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
+    assert val == 3
+
+
+def test_spreadsheet_evaluate_formula_float(sample_spreadsheet):
+    ws = sample_spreadsheet.get_sheet("Sheet1")
+    ws["A1"] = "=3.14"
+    val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
+    assert val == 3.14
