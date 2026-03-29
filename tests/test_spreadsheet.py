@@ -85,3 +85,11 @@ class TestSpreadsheetEvaluate:
         ws["A2"] = "=A1"
         val = sample_spreadsheet.evaluate("Sheet1", "A", 2)
         assert val == 5
+
+    def test_spreadsheet_evaluate_cell_ref_other_sheet(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "5"
+        ws2 = sample_spreadsheet.get_sheet("Sheet2")
+        ws2["A1"] = "=3 + Sheet1!A1"
+        val = sample_spreadsheet.evaluate("Sheet2", "A", 1)
+        assert val == 8
