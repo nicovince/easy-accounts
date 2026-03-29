@@ -9,6 +9,7 @@ class Spreadsheet:
     def __init__(self, spreadsheet_path: str):
         self.path = spreadsheet_path
         self.wb = openpyxl.load_workbook(self.path)
+        self._active_sheet = None
 
     @property
     def active_sheet(self):
@@ -63,5 +64,6 @@ class Spreadsheet:
             if self.is_token_simple(t):
                 op += f"{t.value}"
             elif (t.type, t.subtype) == ("OPERAND", "RANGE"):
-                pass
+                cell_ref = self.split_cell_ref(t.value)
+                op += str(self.evaluate(cell_ref[0], cell_ref[1], cell_ref[2]))
         return eval(op)

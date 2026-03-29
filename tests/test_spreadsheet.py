@@ -79,7 +79,6 @@ class TestSpreadsheetEvaluate:
         val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
         assert val == 3.5
 
-    @pytest.mark.xfail
     def test_spreadsheet_evaluate_cell_ref(self, sample_spreadsheet):
         ws = sample_spreadsheet.get_sheet("Sheet1")
         ws["A1"] = "5"

@@ -14,7 +14,6 @@ class AccountSpreadsheet(Spreadsheet):
         self.category_column = "A"
         self.month_row = 1
         self.user_row = 2
-        self._active_sheet = None
 
     def get_cell_category(self, category: str) -> Cell:
         """Get the cell for a matching category."""
