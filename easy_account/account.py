@@ -1,39 +1,20 @@
 """Manage Account Spreadsheet."""
 
+from easy_account.spreadsheet import Spreadsheet
 import openpyxl
 from openpyxl.cell.cell import Cell
 from openpyxl.comments import Comment
 
 
-class AccountSpreadsheet:
+class AccountSpreadsheet(Spreadsheet):
     """Class to manage an account spreadsheet."""
 
     def __init__(self, spreadsheet_path: str):
-        self.path = spreadsheet_path
-        self.wb = openpyxl.load_workbook(self.path)
+        super(AccountSpreadsheet, self).__init__(spreadsheet_path)
         self.category_column = "A"
         self.month_row = 1
         self.user_row = 2
         self._active_sheet = None
-
-    @property
-    def active_sheet(self):
-        return self._active_sheet
-
-    @active_sheet.setter
-    def active_sheet(self, value):
-        assert value in self.wb.sheetnames
-        self._active_sheet = value
-
-    def save(self):
-        """Save file to disk."""
-        self.wb.save(self.path)
-
-    def get_sheet(self):
-        """Get the requested sheet."""
-        if self.active_sheet is None:
-            return self.wb.active
-        return self.wb[self.active_sheet]
 
     def get_cell_category(self, category: str) -> Cell:
         """Get the cell for a matching category."""
