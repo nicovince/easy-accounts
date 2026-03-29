@@ -44,3 +44,11 @@ class Spreadsheet:
         tokens = Tokenizer(cell_val)
         if len(tokens.items) == 1:
             return self.from_str(tokens.items[0].value)
+
+        op = ""
+        for t in tokens.items:
+            if (t.type, t.subtype) == ("OPERAND", "NUMBER"):
+                op += f"{t.value}"
+            elif (t.type, t.subtype) == ("OPERATOR-INFIX", ""):
+                op += f"{t.value}"
+        return eval(op)

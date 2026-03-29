@@ -55,3 +55,15 @@ class TestSpreadsheetEvaluate:
         ws["A1"] = "=3.14"
         val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
         assert val == 3.14
+
+    def test_spreadsheet_evaluate_formula_add_int(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "=5+3"
+        val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
+        assert val == 8
+
+    def test_spreadsheet_evaluate_formula_add_float(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "=0.1 + 3.4"
+        val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
+        assert val == 3.5
