@@ -1,6 +1,7 @@
 """Manage spreadsheet"""
 
 import openpyxl
+from openpyxl.formula import Tokenizer
 
 
 class Spreadsheet:
@@ -31,3 +32,9 @@ class Spreadsheet:
 
     def get_cell_value(self, sheet_name: str, col: str, row: int):
         return self.get_sheet(sheet_name)[f"{col}{row}"].value
+
+    def evaluate(self, sheet_name: str, col: str, row: int):
+        cell_val = self.get_sheet(sheet_name)[f"{col}{row}"].value
+        tokens = Tokenizer(cell_val)
+        if len(tokens.items) == 1:
+            return int(cell_val)

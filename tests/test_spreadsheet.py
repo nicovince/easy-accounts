@@ -25,3 +25,10 @@ def test_spreadsheet_get_cell_value(sample_spreadsheet):
     ws["A1"] = 5
     val = sample_spreadsheet.get_cell_value("Sheet1", "A", 1)
     assert val == 5
+
+
+def test_spreadsheet_evaluate_no_formula_int(sample_spreadsheet):
+    ws = sample_spreadsheet.get_sheet("Sheet1")
+    ws["A1"] = "5"
+    val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
+    assert val == 5
