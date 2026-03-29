@@ -21,8 +21,13 @@ class Spreadsheet:
         """Save file to disk."""
         self.wb.save(self.path)
 
-    def get_sheet(self):
+    def get_sheet(self, sheet_name: str = None):
         """Get the requested sheet."""
+        if sheet_name is not None:
+            return self.wb[sheet_name]
         if self.active_sheet is None:
             return self.wb.active
         return self.wb[self.active_sheet]
+
+    def get_cell_value(self, sheet_name: str, col: str, row: int):
+        return self.get_sheet(sheet_name)[f"{col}{row}"].value
