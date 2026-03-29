@@ -2,6 +2,7 @@
 
 import openpyxl
 from openpyxl.formula import Tokenizer
+import re
 
 
 class Spreadsheet:
@@ -48,6 +49,12 @@ class Spreadsheet:
             or False
         )
 
+    @staticmethod
+    def split_cell_ref(cell_ref: str):
+        m = re.match(r"((\w*)!)?([A-Z]+)([0-9]+)", cell_ref)
+        ref = (m.group(2), m.group(3), m.group(4))
+        return ref
+
     def evaluate(self, sheet_name: str, col: str, row: int):
         cell_val = self.get_sheet(sheet_name)[f"{col}{row}"].value
         tokens = Tokenizer(cell_val)
@@ -55,4 +62,6 @@ class Spreadsheet:
         for t in tokens.items:
             if self.is_token_simple(t):
                 op += f"{t.value}"
+            elif (t.type, t.subtype) == ("OPERAND", "RANGE"):
+                pass
         return eval(op)

@@ -28,6 +28,17 @@ class TestSpreadsheetHelpers:
         val = sample_spreadsheet.get_cell_value("Sheet1", "A", 1)
         assert val == 5
 
+    @staticmethod
+    def check_splitted_cell_ref(ref, sheet, col, row):
+        res = Spreadsheet.split_cell_ref(ref)
+        assert res == (sheet, col, row)
+
+    def test_spreadsheet_split_cell_ref(self):
+        self.check_splitted_cell_ref("A1", None, "A", "1")
+        self.check_splitted_cell_ref("AA1", None, "AA", "1")
+        self.check_splitted_cell_ref("AA12", None, "AA", "12")
+        self.check_splitted_cell_ref("Sheet!AA12", "Sheet", "AA", "12")
+
 
 class TestSpreadsheetEvaluate:
     """Test Spreadsheet Evaluation"""
@@ -67,3 +78,11 @@ class TestSpreadsheetEvaluate:
         ws["A1"] = "=0.1 + 3.4"
         val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
         assert val == 3.5
+
+    @pytest.mark.xfail
+    def test_spreadsheet_evaluate_cell_ref(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "5"
+        ws["A2"] = "=A1"
+        val = sample_spreadsheet.evaluate("Sheet1", "A", 2)
+        assert val == 5
