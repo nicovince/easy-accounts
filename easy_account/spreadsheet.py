@@ -2,6 +2,7 @@
 
 import openpyxl
 from openpyxl.formula import Tokenizer
+from openpyxl.cell.cell import Cell
 import re
 
 
@@ -56,8 +57,8 @@ class Spreadsheet:
         ref = (m.group(2), m.group(3), m.group(4))
         return ref
 
-    def evaluate(self, sheet_name: str, col: str, row: int):
-        cell_val = self.get_sheet(sheet_name)[f"{col}{row}"].value
+    def evaluate(self, cell: Cell):
+        cell_val = cell.value
         tokens = Tokenizer(cell_val)
         op = ""
         for t in tokens.items:
@@ -65,5 +66,6 @@ class Spreadsheet:
                 op += f"{t.value}"
             elif (t.type, t.subtype) == ("OPERAND", "RANGE"):
                 cell_ref = self.split_cell_ref(t.value)
-                op += str(self.evaluate(cell_ref[0], cell_ref[1], cell_ref[2]))
+                cell = self.get_sheet(cell_ref[0])[f"{cell_ref[1]}{cell_ref[2]}"]
+                op += str(self.evaluate(cell))
         return eval(op)

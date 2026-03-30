@@ -46,44 +46,44 @@ class TestSpreadsheetEvaluate:
     def test_spreadsheet_evaluate_no_formula_int(self, sample_spreadsheet):
         ws = sample_spreadsheet.get_sheet("Sheet1")
         ws["A1"] = "5"
-        val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
+        val = sample_spreadsheet.evaluate(ws["A1"])
         assert val == 5
 
     def test_spreadsheet_evaluate_no_formula_float(self, sample_spreadsheet):
         ws = sample_spreadsheet.get_sheet("Sheet1")
         ws["A1"] = "5.2"
-        val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
+        val = sample_spreadsheet.evaluate(ws["A1"])
         assert val == 5.2
 
     def test_spreadsheet_evaluate_formula_int(self, sample_spreadsheet):
         ws = sample_spreadsheet.get_sheet("Sheet1")
         ws["A1"] = "=3"
-        val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
+        val = sample_spreadsheet.evaluate(ws["A1"])
         assert val == 3
 
     def test_spreadsheet_evaluate_formula_float(self, sample_spreadsheet):
         ws = sample_spreadsheet.get_sheet("Sheet1")
         ws["A1"] = "=3.14"
-        val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
+        val = sample_spreadsheet.evaluate(ws["A1"])
         assert val == 3.14
 
     def test_spreadsheet_evaluate_formula_add_int(self, sample_spreadsheet):
         ws = sample_spreadsheet.get_sheet("Sheet1")
         ws["A1"] = "=5+3"
-        val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
+        val = sample_spreadsheet.evaluate(ws["A1"])
         assert val == 8
 
     def test_spreadsheet_evaluate_formula_add_float(self, sample_spreadsheet):
         ws = sample_spreadsheet.get_sheet("Sheet1")
         ws["A1"] = "=0.1 + 3.4"
-        val = sample_spreadsheet.evaluate("Sheet1", "A", 1)
+        val = sample_spreadsheet.evaluate(ws["A1"])
         assert val == 3.5
 
     def test_spreadsheet_evaluate_cell_ref(self, sample_spreadsheet):
         ws = sample_spreadsheet.get_sheet("Sheet1")
         ws["A1"] = "5"
         ws["A2"] = "=A1"
-        val = sample_spreadsheet.evaluate("Sheet1", "A", 2)
+        val = sample_spreadsheet.evaluate(ws["A2"])
         assert val == 5
 
     def test_spreadsheet_evaluate_cell_ref_other_sheet(self, sample_spreadsheet):
@@ -91,5 +91,14 @@ class TestSpreadsheetEvaluate:
         ws["A1"] = "5"
         ws2 = sample_spreadsheet.get_sheet("Sheet2")
         ws2["A1"] = "=3 + Sheet1!A1"
-        val = sample_spreadsheet.evaluate("Sheet2", "A", 1)
+        val = sample_spreadsheet.evaluate(ws2["A1"])
         assert val == 8
+
+    @pytest.mark.xfail
+    def test_spreadsheet_evaluate_sum_range(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "=5"
+        ws["A2"] = "=A1"
+        ws["A3"] = "=SUM(A1:A2)"
+        val = sample_spreadsheet.evaluate(ws["A3"])
+        assert val == 10
