@@ -35,8 +35,6 @@ class CellRange:
 
 
 class Spreadsheet:
-    range_re = re.compile(r"((\w*)!)?([A-Z]+)([0-9]+):?(([A-Z]+)([0-9]+))?")
-
     def __init__(self, spreadsheet_path: str):
         self.path = spreadsheet_path
         self.wb = openpyxl.load_workbook(self.path)
@@ -80,9 +78,6 @@ class Spreadsheet:
             or (token.type, token.subtype) == ("LITERAL", "")
             or False
         )
-
-    def get_sheet_from_range(cls, cell_ref: str):
-        return cls.range_re.match(cell_ref).group(2)
 
     def evaluate_range(self, cell_range: CellRange) -> list:
         cell_range_eval = list()
