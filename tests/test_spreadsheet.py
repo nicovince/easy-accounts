@@ -1,6 +1,7 @@
 import pytest
 from openpyxl import Workbook
 from easy_account.spreadsheet import Spreadsheet
+from easy_account.spreadsheet import CellRange
 
 
 @pytest.fixture(scope="session")
@@ -15,6 +16,30 @@ def sample_spreadsheet(tmp_path_factory):
     return Spreadsheet(path)
 
 
+class TestCellRange:
+    def test_cell_range_sheet_name(self):
+        cr = CellRange("A1")
+        assert cr.get_parent_sheet_name() is None
+        cr = CellRange("Sheet1!A1")
+        assert cr.get_parent_sheet_name() == "Sheet1"
+
+    def test_cell_range_single_cell(self):
+        assert CellRange("A1").is_single_cell()
+        assert CellRange("Sheet1!A1").is_single_cell()
+        assert not CellRange("A1:B2").is_single_cell()
+        assert not CellRange("Sheet1!A1:B2").is_single_cell()
+
+    def test_cell_range_get_start_pos(self):
+        assert CellRange("A1").get_start_pos() == "A1"
+        assert CellRange("Sheet1!A1").get_start_pos() == "A1"
+        assert CellRange("A1:B2").get_start_pos() == "A1"
+        assert CellRange("Sheet1!A1:B2").get_start_pos() == "A1"
+
+    def test_cell_range_get_end_pos(self):
+        assert CellRange("A1:B2").get_end_pos() == "B2"
+        assert CellRange("Sheet1!A1:B2").get_end_pos() == "B2"
+
+
 class TestSpreadsheetHelpers:
     """Test helpers from Spreadsheet"""
 
@@ -27,17 +52,6 @@ class TestSpreadsheetHelpers:
         ws["A1"] = 5
         val = sample_spreadsheet.get_cell_value("Sheet1", "A", 1)
         assert val == 5
-
-    @staticmethod
-    def check_splitted_cell_ref(ref, sheet, col, row):
-        res = Spreadsheet.split_cell_ref(ref)
-        assert res == (sheet, col, row)
-
-    def test_spreadsheet_split_cell_ref(self):
-        self.check_splitted_cell_ref("A1", None, "A", "1")
-        self.check_splitted_cell_ref("AA1", None, "AA", "1")
-        self.check_splitted_cell_ref("AA12", None, "AA", "12")
-        self.check_splitted_cell_ref("Sheet!AA12", "Sheet", "AA", "12")
 
 
 class TestSpreadsheetEvaluate:
@@ -94,7 +108,6 @@ class TestSpreadsheetEvaluate:
         val = sample_spreadsheet.evaluate(ws2["A1"])
         assert val == 8
 
-    @pytest.mark.xfail
     def test_spreadsheet_evaluate_sum_range(self, sample_spreadsheet):
         ws = sample_spreadsheet.get_sheet("Sheet1")
         ws["A1"] = "=5"

@@ -6,7 +6,37 @@ from openpyxl.cell.cell import Cell
 import re
 
 
+class CellRange:
+    def __init__(self, cell_range: str):
+        cell_range_re = re.compile(r"((\w*)!)?([A-Z]+)([0-9]+):?(([A-Z]+)([0-9]+))?")
+        m = cell_range_re.match(cell_range)
+        self.sheet_name = m.group(2)
+        self.start_col = m.group(3)
+        self.start_row = m.group(4)
+        self.end_col = m.group(6)
+        self.end_row = m.group(7)
+
+    def get_parent_sheet_name(self):
+        return self.sheet_name
+
+    def is_single_cell(self):
+        return self.end_col is None
+
+    def get_start_pos(self):
+        return f"{self.start_col}{self.start_row}"
+
+    def get_end_pos(self):
+        assert not self.is_single_cell()
+        return f"{self.end_col}{self.end_row}"
+
+    def get_range(self):
+        assert not self.is_single_cell()
+        return f"{self.get_start_pos()}:{self.get_end_pos()}"
+
+
 class Spreadsheet:
+    range_re = re.compile(r"((\w*)!)?([A-Z]+)([0-9]+):?(([A-Z]+)([0-9]+))?")
+
     def __init__(self, spreadsheet_path: str):
         self.path = spreadsheet_path
         self.wb = openpyxl.load_workbook(self.path)
@@ -51,11 +81,15 @@ class Spreadsheet:
             or False
         )
 
-    @staticmethod
-    def split_cell_ref(cell_ref: str):
-        m = re.match(r"((\w*)!)?([A-Z]+)([0-9]+)", cell_ref)
-        ref = (m.group(2), m.group(3), m.group(4))
-        return ref
+    def get_sheet_from_range(cls, cell_ref: str):
+        return cls.range_re.match(cell_ref).group(2)
+
+    def evaluate_range(self, cell_range: CellRange) -> list:
+        cell_range_eval = list()
+        for row in self.get_sheet(cell_range.get_parent_sheet_name())[cell_range.get_range()]:
+            for cell in row:
+                cell_range_eval.append(self.evaluate(cell))
+        return cell_range_eval
 
     def evaluate(self, cell: Cell):
         cell_val = cell.value
@@ -65,7 +99,18 @@ class Spreadsheet:
             if self.is_token_simple(t):
                 op += f"{t.value}"
             elif (t.type, t.subtype) == ("OPERAND", "RANGE"):
-                cell_ref = self.split_cell_ref(t.value)
-                cell = self.get_sheet(cell_ref[0])[f"{cell_ref[1]}{cell_ref[2]}"]
-                op += str(self.evaluate(cell))
+                cell_range = CellRange(t.value)
+                if cell_range.is_single_cell():
+                    cell = self.get_sheet(cell_range.get_parent_sheet_name())[
+                        cell_range.get_start_pos()
+                    ]
+                    op += str(self.evaluate(cell))
+                else:
+                    cell_range_vals = self.evaluate_range(cell_range)
+                    # assume SUM
+                    s = 0
+                    for v in cell_range_vals:
+                        s += v
+                    op += str(s)
+
         return eval(op)
