@@ -115,3 +115,21 @@ class TestSpreadsheetEvaluate:
         ws["A3"] = "=SUM(A1:A2)"
         val = sample_spreadsheet.evaluate(ws["A3"])
         assert val == 10
+
+    def test_spreadsheet_evaluate_multiple_sum(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "=5"
+        ws["A2"] = "=A1"
+        ws["A3"] = "=SUM(A1:A2)"
+        ws["B1"] = "=4"
+        ws["B2"] = "=B1"
+        ws["B3"] = "=SUM(B1:B2)"
+        ws["C1"] = "=SUM(A1:A2) + SUM(B1:B2)"
+        val = sample_spreadsheet.evaluate(ws["C1"])
+        assert val == 18
+        ws["C2"] = "=SUM(A1:B2)"
+        val = sample_spreadsheet.evaluate(ws["C2"])
+        assert val == 18
+        ws["C3"] = "=SUM(A1:A2) - SUM(B1:B2)"
+        val = sample_spreadsheet.evaluate(ws["C3"])
+        assert val == 2
