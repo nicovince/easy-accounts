@@ -108,4 +108,7 @@ class Spreadsheet:
                         s += v
                     op += str(s)
 
-        return eval(op)
+        if len(op) > 0:
+            return eval(op)
+        else:
+            return 0

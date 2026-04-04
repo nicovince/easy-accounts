@@ -4,9 +4,9 @@ from easy_account.spreadsheet import Spreadsheet
 from easy_account.spreadsheet import CellRange
 
 
-@pytest.fixture(scope="session")
-def sample_spreadsheet(tmp_path_factory):
-    path = f"{tmp_path_factory.mktemp('sample_spreadsheet')}/sample_spreadsheet.xlsx"
+@pytest.fixture
+def sample_spreadsheet(tmp_path):
+    path = f"{tmp_path}/sample_spreadsheet.xlsx"
     wb = Workbook()
     ws = wb.active
     wb.remove(ws)
@@ -133,3 +133,16 @@ class TestSpreadsheetEvaluate:
         ws["C3"] = "=SUM(A1:A2) - SUM(B1:B2)"
         val = sample_spreadsheet.evaluate(ws["C3"])
         assert val == 2
+
+    def test_spreadsheet_evaluate_empty_cell(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        val = sample_spreadsheet.evaluate(ws["A7"])
+        assert val == 0
+
+    def test_spreadsheet_sum_with_empty_cells(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "=1"
+        ws["A3"] = "=3"
+        ws["A4"] = "=SUM(A1:A3)"
+        val = sample_spreadsheet.evaluate(ws["A4"])
+        assert val == 4
