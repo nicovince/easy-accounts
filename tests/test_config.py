@@ -206,7 +206,7 @@ class TestIsMultiuserSpreadsheet:
 
     def test_multiuser_spreadsheet(self, multiuser_account_fixture):
         """Test that multiuser spreadsheet is correctly identified."""
-        assert is_multiuser_spreadsheet(multiuser_account_fixture) is True
+        assert is_multiuser_spreadsheet(multiuser_account_fixture, sheet_name="multi users") is True
 
 
 class TestGetSpreadsheetUsers:
@@ -288,7 +288,9 @@ users = ["invalid_user"]
         config_path.write_text(config_content)
         config = load_config(config_path)
         with pytest.raises(ConfigValidationError, match="invalid_user"):
-            validate_config_against_spreadsheet(config, multiuser_account_fixture)
+            validate_config_against_spreadsheet(
+                config, multiuser_account_fixture, sheet_name="multi users"
+            )
 
     def test_valid_user_no_error(self, tmp_path, multiuser_account_fixture):
         """Test that valid user entries do not generate errors."""
@@ -305,7 +307,9 @@ users = ["alice", "bob", "shared"]
 """
         config_path.write_text(config_content)
         config = load_config(config_path)
-        validate_config_against_spreadsheet(config, multiuser_account_fixture)
+        validate_config_against_spreadsheet(
+            config, multiuser_account_fixture, sheet_name="multi users"
+        )
 
 
 class TestCreateConfigFromSpreadsheet:
@@ -329,7 +333,9 @@ class TestCreateConfigFromSpreadsheet:
     def test_create_config_from_multiuser_spreadsheet(self, tmp_path, multiuser_account_fixture):
         """Test creating config from multiuser spreadsheet (includes users section)."""
         config_path = tmp_path / ".easy-account.toml"
-        create_config_from_spreadsheet(multiuser_account_fixture, output_path=config_path)
+        create_config_from_spreadsheet(
+            multiuser_account_fixture, sheet_name="multi users", output_path=config_path
+        )
 
         assert config_path.exists()
         config = load_config(config_path)

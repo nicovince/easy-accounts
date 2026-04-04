@@ -5,12 +5,10 @@ from openpyxl import Workbook
 
 import pytest
 
-# Add the project root to the Python path so pytest can find the local modules
 project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-# Change working directory to project root for relative imports
 os.chdir(project_root)
 
 
@@ -63,19 +61,34 @@ def fill_multiuser_sheet(ws):
         ws.cell(row=(row_category_offset + idx), column=1, value=category)
 
 
-@pytest.fixture(scope="session")
-def monouser_account(tmp_path_factory):
+@pytest.fixture
+def spreadsheet(tmp_path):
+    """Create a spreadsheet with both mono-user and multi-user sheets."""
     wb = Workbook()
-    ws = wb.active
-    fill_monouser_sheet(ws)
-    path = f"{tmp_path_factory.mktemp('monoaccount')}/simple_mono_account.xlsx"
+    wb.remove(wb.active)
+    fill_monouser_sheet(wb.create_sheet("mono user"))
+    fill_multiuser_sheet(wb.create_sheet("multi users"))
+    path = tmp_path / "test_spreadsheet.xlsx"
     wb.save(path)
-    return path
+    return str(path)
+
+
+@pytest.fixture
+def monouser_account(spreadsheet):
+    from easy_account.account import AccountSpreadsheet
+
+    acc = AccountSpreadsheet(spreadsheet)
+    acc.active_sheet = "mono user"
+    return spreadsheet
+
+
+@pytest.fixture
+def multiuser_account_fixture(spreadsheet):
+    return spreadsheet
 
 
 @pytest.fixture
 def fresh_monouser_account(tmp_path):
-    """Create a fresh monouser spreadsheet for each test."""
     wb = Workbook()
     ws = wb.active
     fill_monouser_sheet(ws)
@@ -86,20 +99,9 @@ def fresh_monouser_account(tmp_path):
 
 @pytest.fixture
 def fresh_multiuser_account(tmp_path):
-    """Create a fresh multiuser spreadsheet for each test."""
     wb = Workbook()
     ws = wb.active
     fill_multiuser_sheet(ws)
     path = tmp_path / "fresh_multiuser_account.xlsx"
     wb.save(path)
     return str(path)
-
-
-@pytest.fixture(scope="session")
-def multiuser_account_fixture(tmp_path_factory):
-    wb = Workbook()
-    ws = wb.active
-    fill_multiuser_sheet(ws)
-    path = f"{tmp_path_factory.mktemp('multiuser')}/multi_user_account.xlsx"
-    wb.save(path)
-    return path

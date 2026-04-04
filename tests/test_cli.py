@@ -21,7 +21,7 @@ class TestCliUserValidation:
     """Tests for CLI user validation."""
 
     def test_invalid_user_with_config_returns_error(
-        self, tmp_path_cwd, monouser_account, capsys, monkeypatch
+        self, tmp_path_cwd, spreadsheet, capsys, monkeypatch
     ):
         """Test that invalid --user returns error when config file exists."""
         from easy_account.cli import main
@@ -34,8 +34,8 @@ class TestCliUserValidation:
             "argv",
             [
                 "easy-account",
-                str(monouser_account),
-                "Sheet",
+                str(spreadsheet),
+                "mono user",
                 "janvier",
                 "foo",
                 "100",
@@ -52,7 +52,7 @@ class TestCliUserValidation:
         assert "invalid_user" in captured.err
 
     def test_invalid_user_without_config_returns_error(
-        self, tmp_path_cwd, multiuser_account_fixture, capsys, monkeypatch
+        self, tmp_path_cwd, spreadsheet, capsys, monkeypatch
     ):
         """Test that invalid --user returns error when config file does not exist."""
         from easy_account.cli import main
@@ -62,8 +62,8 @@ class TestCliUserValidation:
             "argv",
             [
                 "easy-account",
-                str(multiuser_account_fixture),
-                "Sheet",
+                str(spreadsheet),
+                "multi users",
                 "janvier",
                 "foo",
                 "100",
@@ -81,7 +81,7 @@ class TestCliUserValidation:
         assert "not found in spreadsheet" in captured.err
 
     def test_valid_user_without_config_no_error(
-        self, tmp_path_cwd, multiuser_account_fixture, capsys, monkeypatch
+        self, tmp_path_cwd, spreadsheet, capsys, monkeypatch
     ):
         """Test that valid --user does not return error when config file does not exist."""
         from easy_account.cli import main
@@ -91,8 +91,8 @@ class TestCliUserValidation:
             "argv",
             [
                 "easy-account",
-                str(multiuser_account_fixture),
-                "Sheet",
+                str(spreadsheet),
+                "multi users",
                 "janvier",
                 "foo",
                 "100",
@@ -107,7 +107,7 @@ class TestCliUserValidation:
         assert "alice" not in captured.err
 
     def test_user_ignored_when_spreadsheet_is_monouser(
-        self, tmp_path_cwd, monouser_account, capsys, monkeypatch
+        self, tmp_path_cwd, spreadsheet, capsys, monkeypatch
     ):
         """Test that --user is accepted for monouser spreadsheet without config."""
         from easy_account.cli import main
@@ -117,8 +117,8 @@ class TestCliUserValidation:
             "argv",
             [
                 "easy-account",
-                str(monouser_account),
-                "Sheet",
+                str(spreadsheet),
+                "mono user",
                 "janvier",
                 "foo",
                 "100",
