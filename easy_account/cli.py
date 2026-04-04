@@ -35,7 +35,7 @@ Configuration:
 Autocompletion:
   To enable bash/zsh autocompletion, run:
     eval "$(register-python-argcomplete easy-account)"
-  
+
   For permanent autocompletion, add the above line to your shell profile (.bashrc, .zshrc, etc.)
 """,
         formatter_class=argparse.RawTextHelpFormatter,
@@ -134,6 +134,10 @@ Autocompletion:
         help="A comment to the cell regarding the amount spent",
     )
 
+    parser.add_argument(
+        "--show-only", action="store_true", help="Only show content of requested cell and exit"
+    )
+
     user_arg = parser.add_argument(
         "--user",
         type=str,
@@ -203,7 +207,6 @@ Autocompletion:
         amounts_str = " + ".join(str(a) for a in args.amount)
         print(f"Adding {amounts_str} into category {args.category} for month {args.month}")
 
-    # Placeholder: actual implementation would go here
     print(f"Processing banking accounts from: {args.spreadsheet}")
     account = AccountSpreadsheet(args.spreadsheet)
     account.active_sheet = args.sheet
@@ -212,8 +215,13 @@ Autocompletion:
         comment = f"{amounts_str} : {args.comment}"
     else:
         comment = None
-    account.add_entry(args.month, args.category, args.amount, comment, args.user)
-    account.save()
+    if not args.show_only:
+        account.add_entry(args.month, args.category, args.amount, comment, args.user)
+        account.save()
+    else:
+        cell = account.get_cell(args.month, args.category, args.user)
+        val = account.evaluate(cell)
+        print(f"Show content of {cell}: {val}")
 
 
 if __name__ == "__main__":
