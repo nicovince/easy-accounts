@@ -182,3 +182,48 @@ class TestCliInsertCmd:
         easy_account.cli.main()
         captured = capsys.readouterr()
         assert "4321" in captured.out
+
+
+class TestCliShowCmd:
+    """Tests for CLI show command."""
+
+    def test_show_mono_account(self, spreadsheet_unmodified, capsys, monkeypatch):
+        """Test show command for mono account."""
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "show",
+                str(spreadsheet_unmodified),
+                "mono user",
+                "janvier",
+                "bar",
+            ],
+        )
+
+        easy_account.cli.main()
+        captured = capsys.readouterr()
+        assert "1234" in captured.out
+
+    def test_show_multi_account(self, spreadsheet_unmodified, capsys, monkeypatch):
+        """Test that --show-only report a value."""
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "show",
+                str(spreadsheet_unmodified),
+                "multi users",
+                "janvier",
+                "bar",
+                "--user",
+                "bob",
+            ],
+        )
+
+        easy_account.cli.main()
+        captured = capsys.readouterr()
+        assert "4321" in captured.out

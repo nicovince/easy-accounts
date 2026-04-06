@@ -72,7 +72,22 @@ def add_cmn_args_parsers(parsers: list):
             user_arg.completer = lambda prefix, parsed_args, **kwargs: users_choices or []  # type: ignore
 
 
-def insert(args):
+def account_get_cell_value(
+    account: AccountSpreadsheet, month: str, category: str, user: str = None
+):
+    cell = account.get_cell(month, category, user)
+    val = account.evaluate(cell)
+    return (cell, val)
+
+
+def cmd_show(args):
+    account = AccountSpreadsheet(args.spreadsheet)
+    account.active_sheet = args.sheet
+    cell, val = account_get_cell_value(account, args.month, args.category, args.user)
+    print(f"Show content of {cell}: {val}")
+
+
+def cmd_insert(args):
     account = AccountSpreadsheet(args.spreadsheet)
     account.active_sheet = args.sheet
     if args.comment is not None:
@@ -84,8 +99,7 @@ def insert(args):
         account.add_entry(args.month, args.category, args.amount, comment, args.user)
         account.save()
     else:
-        cell = account.get_cell(args.month, args.category, args.user)
-        val = account.evaluate(cell)
+        cell, val = account_get_cell_value(account, args.month, args.category, args.user)
         print(f"Show content of {cell}: {val}")
 
 
@@ -152,7 +166,8 @@ Autocompletion:
     parser_insert = subparsers.add_parser(
         "insert", help="Insert new entry into account spreadsheet"
     )
-    add_cmn_args_parsers([parser_insert])
+    parser_show = subparsers.add_parser("show", help="Show cell value")
+    add_cmn_args_parsers([parser_insert, parser_show])
 
     parser_insert.add_argument(
         "amount",
@@ -171,7 +186,8 @@ Autocompletion:
     parser_insert.add_argument(
         "--show-only", action="store_true", help="Only show content of requested cell and exit"
     )
-    parser_insert.set_defaults(func=insert)
+    parser_insert.set_defaults(func=cmd_insert)
+    parser_show.set_defaults(func=cmd_show)
 
     parser.add_argument(
         "-v",
