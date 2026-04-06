@@ -6,6 +6,7 @@ import sys
 import pytest
 
 from easy_account.config import create_example_config
+import easy_account.cli
 
 
 @pytest.fixture
@@ -24,7 +25,6 @@ class TestCliUserValidation:
         self, tmp_path_cwd, spreadsheet, capsys, monkeypatch
     ):
         """Test that invalid --user returns error when config file exists."""
-        from easy_account.cli import main
 
         config_path = tmp_path_cwd / ".easy-account.toml"
         create_example_config(config_path)
@@ -46,7 +46,7 @@ class TestCliUserValidation:
         )
 
         with pytest.raises(SystemExit) as exc_info:
-            main()
+            easy_account.cli.main()
 
         assert exc_info.value.code == 1
         captured = capsys.readouterr()
@@ -56,7 +56,6 @@ class TestCliUserValidation:
         self, tmp_path_cwd, spreadsheet, capsys, monkeypatch
     ):
         """Test that invalid --user returns error when config file does not exist."""
-        from easy_account.cli import main
 
         monkeypatch.setattr(
             sys,
@@ -75,7 +74,7 @@ class TestCliUserValidation:
         )
 
         with pytest.raises(SystemExit) as exc_info:
-            main()
+            easy_account.cli.main()
 
         assert exc_info.value.code == 1
         captured = capsys.readouterr()
@@ -86,7 +85,6 @@ class TestCliUserValidation:
         self, tmp_path_cwd, spreadsheet, capsys, monkeypatch
     ):
         """Test that valid --user does not return error when config file does not exist."""
-        from easy_account.cli import main
 
         monkeypatch.setattr(
             sys,
@@ -104,7 +102,7 @@ class TestCliUserValidation:
             ],
         )
 
-        main()
+        easy_account.cli.main()
 
         captured = capsys.readouterr()
         assert "alice" not in captured.err
@@ -113,7 +111,6 @@ class TestCliUserValidation:
         self, tmp_path_cwd, spreadsheet, capsys, monkeypatch
     ):
         """Test that --user is accepted for monouser spreadsheet without config."""
-        from easy_account.cli import main
 
         monkeypatch.setattr(
             sys,
@@ -131,14 +128,17 @@ class TestCliUserValidation:
             ],
         )
 
-        main()
+        easy_account.cli.main()
 
         captured = capsys.readouterr()
         assert "any_user" not in captured.err
 
+
+class TestCliInsertCmd:
+    """Tests for CLI insert command."""
+
     def test_mono_account_show_only(self, spreadsheet_unmodified, capsys, monkeypatch):
         """Test that --show-only report a value."""
-        from easy_account.cli import main
 
         monkeypatch.setattr(
             sys,
@@ -155,13 +155,12 @@ class TestCliUserValidation:
             ],
         )
 
-        main()
+        easy_account.cli.main()
         captured = capsys.readouterr()
         assert "1234" in captured.out
 
     def test_multi_account_show_only(self, spreadsheet_unmodified, capsys, monkeypatch):
         """Test that --show-only report a value."""
-        from easy_account.cli import main
 
         monkeypatch.setattr(
             sys,
@@ -180,6 +179,6 @@ class TestCliUserValidation:
             ],
         )
 
-        main()
+        easy_account.cli.main()
         captured = capsys.readouterr()
         assert "4321" in captured.out
