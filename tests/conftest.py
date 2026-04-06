@@ -1,4 +1,5 @@
 import sys
+import shutil
 import os
 from pathlib import Path
 from openpyxl import Workbook
@@ -61,15 +62,22 @@ def fill_multiuser_sheet(ws):
         ws.cell(row=(row_category_offset + idx), column=1, value=category)
 
 
-@pytest.fixture
-def spreadsheet(tmp_path):
-    """Create a spreadsheet with both mono-user and multi-user sheets."""
+@pytest.fixture(scope="session")
+def spreadsheet_template(tmp_path_factory):
     wb = Workbook()
     wb.remove(wb.active)
     fill_monouser_sheet(wb.create_sheet("mono user"))
     fill_multiuser_sheet(wb.create_sheet("multi users"))
-    path = tmp_path / "test_spreadsheet.xlsx"
+    path = tmp_path_factory.mktemp("template") / "template_spreadsheet.xlsx"
     wb.save(path)
+    return str(path)
+
+
+@pytest.fixture
+def spreadsheet(tmp_path, spreadsheet_template):
+    """Create a spreadsheet with both mono-user and multi-user sheets."""
+    path = tmp_path / "test_spreadsheet.xlsx"
+    shutil.copy(spreadsheet_template, path)
     return str(path)
 
 
