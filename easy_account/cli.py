@@ -22,6 +22,56 @@ except ImportError:
     argcomplete = None  # type: ignore
 
 
+def add_cmn_args_parsers(parsers: list):
+    """Add args common to parsers"""
+    # Try to load config for providing choices
+    try:
+        config = load_config()
+        months_choices = get_months(config)
+        categories_choices = get_categories(config)
+        users_choices = get_users(config)
+    except ConfigError:
+        # Config file doesn't exist yet, allow any input
+        months_choices = None
+        categories_choices = None
+        users_choices = None
+
+    for p in parsers:
+        p.add_argument(
+            "spreadsheet",
+            type=str,
+            help="Path to the banking accounts spreadsheet",
+        )
+
+        p.add_argument(
+            "sheet",
+            type=str,
+            help="The title of the sheet to edit",
+        )
+        month_arg = p.add_argument(
+            "month",
+            type=str,
+            help="The month the amount was spent",
+        )
+        month_arg.completer = lambda prefix, parsed_args, **kwargs: months_choices or []  # type: ignore
+
+        category_arg = p.add_argument(
+            "category",
+            type=str,
+            help="The category of the amount spent",
+        )
+        category_arg.completer = lambda prefix, parsed_args, **kwargs: categories_choices or []  # type: ignore
+
+        user_arg = p.add_argument(
+            "--user",
+            type=str,
+            default=None,
+            help="In case of multi-user account, the user who made the expanse",
+        )
+        if users_choices:
+            user_arg.completer = lambda prefix, parsed_args, **kwargs: users_choices or []  # type: ignore
+
+
 def main():
     """Main entry point for the easy-account CLI."""
     parser = argparse.ArgumentParser(
@@ -81,71 +131,29 @@ Autocompletion:
             print("Please edit it to match your needs and re-run the command.")
         sys.exit(0)
 
-    # Add positional arguments
-    parser.add_argument(
-        "spreadsheet",
-        type=str,
-        help="Path to the banking accounts spreadsheet",
+    subparsers = parser.add_subparsers(help="Subcommands help")
+    parser_insert = subparsers.add_parser(
+        "insert", help="Insert new entry into account spreadsheet"
     )
+    add_cmn_args_parsers([parser_insert])
 
-    parser.add_argument(
-        "sheet",
-        type=str,
-        help="The title of the sheet to edit",
-    )
-
-    # Try to load config for providing choices
-    try:
-        config = load_config()
-        months_choices = get_months(config)
-        categories_choices = get_categories(config)
-        users_choices = get_users(config)
-    except ConfigError:
-        # Config file doesn't exist yet, allow any input
-        months_choices = None
-        categories_choices = None
-        users_choices = None
-
-    month_arg = parser.add_argument(
-        "month",
-        type=str,
-        help="The month the amount was spent",
-    )
-    month_arg.completer = lambda prefix, parsed_args, **kwargs: months_choices or []  # type: ignore
-
-    category_arg = parser.add_argument(
-        "category",
-        type=str,
-        help="The category of the amount spent",
-    )
-    category_arg.completer = lambda prefix, parsed_args, **kwargs: categories_choices or []  # type: ignore
-
-    parser.add_argument(
+    parser_insert.add_argument(
         "amount",
         type=float,
         nargs="+",
         help="Amount(s) spent to add into account",
     )
 
-    parser.add_argument(
+    parser_insert.add_argument(
         "--comment",
         type=str,
         default=None,
         help="A comment to the cell regarding the amount spent",
     )
 
-    parser.add_argument(
+    parser_insert.add_argument(
         "--show-only", action="store_true", help="Only show content of requested cell and exit"
     )
-
-    user_arg = parser.add_argument(
-        "--user",
-        type=str,
-        default=None,
-        help="In case of multi-user account, the user who made the expanse",
-    )
-    if users_choices:
-        user_arg.completer = lambda prefix, parsed_args, **kwargs: users_choices or []  # type: ignore
 
     parser.add_argument(
         "-v",

@@ -34,6 +34,7 @@ class TestCliUserValidation:
             "argv",
             [
                 "easy-account",
+                "insert",
                 str(spreadsheet),
                 "mono user",
                 "janvier",
@@ -62,6 +63,7 @@ class TestCliUserValidation:
             "argv",
             [
                 "easy-account",
+                "insert",
                 str(spreadsheet),
                 "multi users",
                 "janvier",
@@ -91,6 +93,7 @@ class TestCliUserValidation:
             "argv",
             [
                 "easy-account",
+                "insert",
                 str(spreadsheet),
                 "multi users",
                 "janvier",
@@ -117,6 +120,7 @@ class TestCliUserValidation:
             "argv",
             [
                 "easy-account",
+                "insert",
                 str(spreadsheet),
                 "mono user",
                 "janvier",
