@@ -1,6 +1,7 @@
 import sys
 import shutil
 import os
+import hashlib
 from pathlib import Path
 from openpyxl import Workbook
 
@@ -67,6 +68,7 @@ def fill_multiuser_sheet(ws):
 
 @pytest.fixture(scope="session")
 def spreadsheet_template(tmp_path_factory):
+    """Create a spreadsheet with both mono-user and multi-user sheets."""
     wb = Workbook()
     wb.remove(wb.active)
     fill_monouser_sheet(wb.create_sheet("mono user"))
@@ -77,8 +79,20 @@ def spreadsheet_template(tmp_path_factory):
 
 
 @pytest.fixture
+def spreadsheet_unmodified(tmp_path, spreadsheet_template):
+    """Spreadhseet which must not be modified by the test."""
+    path = tmp_path / "unmodified_spreadsheet.xlsx"
+    shutil.copy(spreadsheet_template, path)
+    with open(str(path), "rb") as f:
+        orig_digest = hashlib.sha256(f.read())
+    yield str(path)
+    with open(str(path), "rb") as f:
+        digest = hashlib.sha256(f.read())
+    assert orig_digest.hexdigest() == digest.hexdigest()
+
+
+@pytest.fixture
 def spreadsheet(tmp_path, spreadsheet_template):
-    """Create a spreadsheet with both mono-user and multi-user sheets."""
     path = tmp_path / "test_spreadsheet.xlsx"
     shutil.copy(spreadsheet_template, path)
     return str(path)
