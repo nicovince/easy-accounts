@@ -41,6 +41,8 @@ def fill_monouser_sheet(ws):
     for idx, category in enumerate(categories):
         ws.cell(row=(row_category_offset + idx), column=1, value=category)
 
+    ws["B3"] = "=1234"
+
 
 def fill_multiuser_sheet(ws):
     users = ["alice", "bob", "shared"]
@@ -60,6 +62,7 @@ def fill_multiuser_sheet(ws):
 
     for idx, category in enumerate(categories):
         ws.cell(row=(row_category_offset + idx), column=1, value=category)
+    ws["C4"] = "=4321"
 
 
 @pytest.fixture(scope="session")

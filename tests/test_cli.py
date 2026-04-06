@@ -135,3 +135,51 @@ class TestCliUserValidation:
 
         captured = capsys.readouterr()
         assert "any_user" not in captured.err
+
+    def test_mono_account_show_only(self, spreadsheet, capsys, monkeypatch):
+        """Test that --show-only report a value."""
+        from easy_account.cli import main
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "insert",
+                str(spreadsheet),
+                "mono user",
+                "janvier",
+                "bar",
+                "100",
+                "--show-only",
+            ],
+        )
+
+        main()
+        captured = capsys.readouterr()
+        assert "1234" in captured.out
+
+    def test_multi_account_show_only(self, spreadsheet, capsys, monkeypatch):
+        """Test that --show-only report a value."""
+        from easy_account.cli import main
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "insert",
+                str(spreadsheet),
+                "multi users",
+                "janvier",
+                "bar",
+                "100",
+                "--user",
+                "bob",
+                "--show-only",
+            ],
+        )
+
+        main()
+        captured = capsys.readouterr()
+        assert "4321" in captured.out
