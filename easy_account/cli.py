@@ -73,15 +73,22 @@ def add_cmn_args_parsers(parsers: list):
             user_arg.completer = lambda prefix, parsed_args, **kwargs: users_choices or []  # type: ignore
 
 
-def parse_report_opt(report: str) -> list[str]:
+def parse_report_opt(report: str, current_month: str = None) -> tuple[str, str, str | None]:
     res = report.split(",")
-    assert len(res) == 2 or len(res) == 3
-    month = res[0]
-    category = res[1]
-    user = None
-    if len(res) == 3:
-        user = res[2]
-    return (month, category, user)
+    if len(res) == 1:
+        category = res[0]
+        month = current_month
+    elif len(res) == 2:
+        month = res[0] if res[0] else current_month
+        category = res[1]
+    elif len(res) == 3:
+        month = res[0] if res[0] else current_month
+        category = res[1]
+        user = res[2] if res[2] else None
+        return (month, category, user)
+    else:
+        raise ValueError(f"Invalid report format: {report}")
+    return (month, category, None)
 
 
 def account_get_cell_value(
@@ -107,7 +114,7 @@ def cmd_insert(args):
 
     # Use default report from config if --report not specified
     if args.report is None:
-        args.report = get_report(config)
+        args.report = get_report(config, args.month)
 
     account = AccountSpreadsheet(args.spreadsheet)
     account.active_sheet = args.sheet
@@ -123,7 +130,7 @@ def cmd_insert(args):
         cell, val = account_get_cell_value(account, args.month, args.category, args.user)
         print(f"Show content of {cell}: {val}")
     if args.report is not None:
-        (month, category, user) = parse_report_opt(args.report)
+        (month, category, user) = parse_report_opt(args.report, args.month)
         cell, val = account_get_cell_value(account, month, category, user)
         print(f"Show content of {cell}: {val}")
 

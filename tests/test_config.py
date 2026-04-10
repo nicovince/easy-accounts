@@ -243,6 +243,90 @@ def test_get_report_without_config_file(tmp_path_cwd):
     assert report is None
 
 
+def test_get_report_with_current_month_category_only(tmp_path):
+    """Test getting report when only category is defined (omitting month)."""
+    config_path = tmp_path / ".easy-account.toml"
+    config_content = """
+[months]
+months = ["janvier"]
+
+[categories]
+categories = ["groceries"]
+
+[report]
+report = ",groceries"
+"""
+    config_path.write_text(config_content)
+
+    config = load_config(config_path)
+    report = get_report(config, current_month="janvier")
+
+    assert report == "janvier,groceries"
+
+
+def test_get_report_with_empty_month_and_current_month(tmp_path):
+    """Test getting report when month is empty string (using current_month)."""
+    config_path = tmp_path / ".easy-account.toml"
+    config_content = """
+[months]
+months = ["janvier"]
+
+[categories]
+categories = ["groceries"]
+
+[report]
+report = ",groceries"
+"""
+    config_path.write_text(config_content)
+
+    config = load_config(config_path)
+    report = get_report(config, current_month="janvier")
+
+    assert report == "janvier,groceries"
+
+
+def test_get_report_with_empty_month_user_and_current_month(tmp_path):
+    """Test getting report with empty month and user (using current_month)."""
+    config_path = tmp_path / ".easy-account.toml"
+    config_content = """
+[months]
+months = ["janvier"]
+
+[categories]
+categories = ["groceries"]
+
+[report]
+report = ",groceries,alice"
+"""
+    config_path.write_text(config_content)
+
+    config = load_config(config_path)
+    report = get_report(config, current_month="janvier")
+
+    assert report == "janvier,groceries,alice"
+
+
+def test_get_report_without_current_month_returns_empty_month(tmp_path):
+    """Test that when current_month is not provided, empty month is kept."""
+    config_path = tmp_path / ".easy-account.toml"
+    config_content = """
+[months]
+months = ["janvier"]
+
+[categories]
+categories = ["groceries"]
+
+[report]
+report = ",groceries"
+"""
+    config_path.write_text(config_content)
+
+    config = load_config(config_path)
+    report = get_report(config, current_month=None)
+
+    assert report == ",groceries"
+
+
 class TestIsMultiuserSpreadsheet:
     """Tests for is_multiuser_spreadsheet function."""
 

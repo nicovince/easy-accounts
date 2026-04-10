@@ -119,11 +119,12 @@ def get_categories(config: dict | None = None) -> list[str]:
         raise ConfigError(f"Failed to read categories from config: {e}")
 
 
-def get_report(config: dict | None = None) -> str | None:
+def get_report(config: dict | None = None, current_month: str = None) -> str | None:
     """Get default report cell from config.
 
     Args:
         config: Configuration dictionary. If None, loads from file.
+        current_month: The current month being edited (used if month is omitted in report).
 
     Returns:
         Default report cell string (format: 'month,category[,user]') or None if not defined.
@@ -139,7 +140,21 @@ def get_report(config: dict | None = None) -> str | None:
         if isinstance(report, dict):
             report = report.get("report")
 
-        return report if report else None
+        if not report:
+            return None
+
+        parts = report.split(",")
+        if len(parts) == 1:
+            return f"{current_month},{parts[0]}"
+        elif len(parts) == 2:
+            if parts[0] == "" and current_month:
+                return f"{current_month},{parts[1]}"
+            return report
+        elif len(parts) == 3:
+            if parts[0] == "" and current_month:
+                return f"{current_month},{parts[1]},{parts[2]}"
+            return report
+        return report
     except Exception:
         return None
 

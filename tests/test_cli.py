@@ -299,6 +299,117 @@ report = "janvier,foo"
         captured = capsys.readouterr()
         assert "1334" in captured.out
 
+    def test_cli_report_with_category_only_uses_current_month(
+        self, spreadsheet, capsys, monkeypatch
+    ):
+        """Test that --report with only category uses current month from args."""
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "insert",
+                str(spreadsheet),
+                "mono user",
+                "janvier",
+                "bar",
+                "100",
+                "--report",
+                ",bar",
+            ],
+        )
+
+        easy_account.cli.main()
+        captured = capsys.readouterr()
+        assert "1334" in captured.out
+
+    def test_cli_report_with_empty_month_uses_current_month(self, spreadsheet, capsys, monkeypatch):
+        """Test that --report with empty month uses current month from args."""
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "insert",
+                str(spreadsheet),
+                "mono user",
+                "fevrier",
+                "bar",
+                "100",
+                "--report",
+                ",bar",
+            ],
+        )
+
+        easy_account.cli.main()
+        captured = capsys.readouterr()
+        assert "100.0" in captured.out
+
+    def test_cli_report_with_user_and_empty_month_uses_current_month(
+        self, spreadsheet, capsys, monkeypatch
+    ):
+        """Test that --report with empty month and user uses current month from args."""
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "insert",
+                str(spreadsheet),
+                "multi users",
+                "janvier",
+                "bar",
+                "100",
+                "--user",
+                "bob",
+                "--report",
+                ",bar,bob",
+            ],
+        )
+
+        easy_account.cli.main()
+        captured = capsys.readouterr()
+        assert "4421" in captured.out
+
+
+class TestCliDefaultReportFromConfig:
+    """Tests for default report from config with omitted month."""
+
+    def test_default_report_with_omitted_month_uses_current_month(
+        self, spreadsheet, capsys, monkeypatch, tmp_path_cwd
+    ):
+        """Test that config report with omitted month uses current month from args."""
+        config_path = tmp_path_cwd / ".easy-account.toml"
+        config_content = """
+[months]
+months = ["janvier", "fevrier", "mars"]
+
+[categories]
+categories = ["foo", "bar"]
+
+[report]
+report = ",bar"
+"""
+        config_path.write_text(config_content)
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "insert",
+                str(spreadsheet),
+                "mono user",
+                "janvier",
+                "bar",
+                "100",
+            ],
+        )
+
+        easy_account.cli.main()
+        captured = capsys.readouterr()
+        assert "1334" in captured.out
+
 
 class TestCliShowCmd:
     """Tests for CLI show command."""
