@@ -7,7 +7,8 @@ Fill banking accounts spreadsheet from the command line.
 ## Usage
 
 ```bash
-easy-account <spreadsheet> <sheet> <month> <category> <amount> [<amount> ...] [OPTIONS]
+easy-account insert <spreadsheet> <sheet> <month> <category> <amount> [<amount> ...] [OPTIONS]
+easy-account show <spreadsheet> <sheet> <month> <category> [OPTIONS]
 ```
 
 ### Arguments
@@ -20,8 +21,13 @@ easy-account <spreadsheet> <sheet> <month> <category> <amount> [<amount> ...] [O
 
 ### Options
 
+#### `insert` options
 - `--comment <text>`: Add a comment to the cell regarding the amount(s) spent
+- `--show-only`: Show content of cell
+- `--report <month,category[,user]>`: Report value of specific cell after insertion
 - `--user <name>`: For multi-user accounts, specify the user who made the expense
+
+#### Common options
 - `-v, --verbose`: Enable verbose output
 - `--version`: Show version information
 
@@ -29,22 +35,22 @@ easy-account <spreadsheet> <sheet> <month> <category> <amount> [<amount> ...] [O
 
 Add a single amount:
 ```bash
-easy-account accounts.xlsx Sheet1 janvier groceries 50.75 --comment "Weekly shopping"
+easy-account insert accounts.xlsx Sheet1 janvier groceries 50.75 --comment "Weekly shopping"
 ```
 
 Add multiple amounts to the same cell (creates formula: =5.0 + 10.5 + 15.3):
 ```bash
-easy-account accounts.xlsx Sheet1 janvier groceries 5.0 10.5 15.3 --comment "Three purchases"
+easy-account insert accounts.xlsx Sheet1 janvier groceries 5.0 10.5 15.3 --comment "Three purchases"
 ```
 
 Multi-user account:
 ```bash
-easy-account accounts.xlsx "multi users" janvier groceries 50.0 --user alice --comment "Alice's groceries"
+easy-account insert accounts.xlsx "multi users" janvier groceries 50.0 --user alice --comment "Alice's groceries"
 ```
 
 With verbose output:
 ```bash
-easy-account accounts.xlsx Sheet1 janvier groceries 100.0 -v
+easy-account insert accounts.xlsx Sheet1 janvier groceries 100.0 -v
 ```
 
 ## Setup
