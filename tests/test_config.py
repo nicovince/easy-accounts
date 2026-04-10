@@ -12,6 +12,7 @@ from easy_account.config import (
     create_example_config,
     find_config_file,
     get_categories,
+    get_kdrive_api_url,
     get_months,
     get_report,
     get_users,
@@ -151,6 +152,72 @@ def test_get_users_valid(tmp_path):
     assert "alice" in users
     assert "bob" in users
     assert "charlie" in users
+
+
+class TestGetKdriveApiUrl:
+    """Tests for get_kdrive_api_url function."""
+
+    def test_get_kdrive_api_url_valid(self, tmp_path):
+        """Test getting kdrive API URL from valid config."""
+        config_path = tmp_path / ".easy-account.toml"
+        config_content = """
+[months]
+months = ["janvier"]
+
+[categories]
+categories = ["groceries"]
+
+[kdrive]
+api_url = "https://api.infomaniak.com/2/drive/1475057/files/9"
+"""
+        config_path.write_text(config_content)
+
+        config = load_config(config_path)
+        api_url = get_kdrive_api_url(config)
+
+        assert api_url == "https://api.infomaniak.com/2/drive/1475057/files/9"
+
+    def test_get_kdrive_api_url_not_defined(self, tmp_path):
+        """Test getting kdrive API URL when not defined in config."""
+        config_path = tmp_path / ".easy-account.toml"
+        config_content = """
+[months]
+months = ["janvier"]
+
+[categories]
+categories = ["groceries"]
+"""
+        config_path.write_text(config_content)
+
+        config = load_config(config_path)
+        api_url = get_kdrive_api_url(config)
+
+        assert api_url is None
+
+    def test_get_kdrive_api_url_without_config_file(self, tmp_path_cwd):
+        """Test getting kdrive API URL when config file doesn't exist."""
+        api_url = get_kdrive_api_url()
+        assert api_url is None
+
+    def test_get_kdrive_api_url_with_nested_config(self, tmp_path):
+        """Test getting kdrive API URL from nested kdrive config."""
+        config_path = tmp_path / ".easy-account.toml"
+        config_content = """
+[months]
+months = ["janvier"]
+
+[categories]
+categories = ["groceries"]
+
+[kdrive]
+api_url = "https://api.infomaniak.com/2/drive/1475057/files/9"
+"""
+        config_path.write_text(config_content)
+
+        config = load_config(config_path)
+        api_url = get_kdrive_api_url(config)
+
+        assert api_url == "https://api.infomaniak.com/2/drive/1475057/files/9"
 
 
 def test_get_users_empty_when_not_defined(tmp_path):

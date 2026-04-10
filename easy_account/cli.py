@@ -4,6 +4,7 @@ import argparse
 import importlib.metadata
 import sys
 from pathlib import Path
+
 from easy_account.account import AccountSpreadsheet
 from easy_account.config import (
     load_config,
@@ -11,11 +12,13 @@ from easy_account.config import (
     get_categories,
     get_users,
     get_report,
+    get_kdrive_api_url,
     ConfigError,
     ConfigValidationError,
     create_config_from_spreadsheet,
     validate_config_against_spreadsheet,
 )
+from easy_account.infomaniak import InfomaniakApi, MissingTokenError
 
 try:
     import argcomplete
@@ -99,14 +102,114 @@ def account_get_cell_value(
     return (cell, val)
 
 
+def validate_insert_show_args(args):
+    # Validate that the spreadsheet exists
+    spreadsheet_path = Path(args.spreadsheet)
+    if not spreadsheet_path.exists():
+        print(f"Error: Spreadsheet '{args.spreadsheet}' not found.", file=sys.stderr)
+        sys.exit(1)
+
+    # Validate config against spreadsheet if config file exists
+    try:
+        config = load_config()
+    except ConfigError:
+        config = None
+
+    if args.user is not None:
+        if config is not None:
+            valid_users = get_users(config)
+            if valid_users and args.user not in valid_users:
+                print(
+                    f"Error: User '{args.user}' not found in configuration file. "
+                    f"Valid users are: {', '.join(valid_users)}",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+        else:
+            validation_account = AccountSpreadsheet(args.spreadsheet)
+            if args.sheet:
+                validation_account.active_sheet = args.sheet
+            spreadsheet_users = validation_account.get_spreadsheet_users()
+            if spreadsheet_users and args.user not in spreadsheet_users:
+                print(
+                    f"Error: User '{args.user}' not found in spreadsheet. "
+                    f"Valid users are: {', '.join(spreadsheet_users)}",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+
+    if config is not None:
+        try:
+            validate_config_against_spreadsheet(config, args.spreadsheet, args.sheet)
+        except ConfigValidationError as e:
+            print(f"Error: Configuration validation failed:\n{e}", file=sys.stderr)
+            sys.exit(1)
+
+
 def cmd_show(args):
+    validate_insert_show_args(args)
     account = AccountSpreadsheet(args.spreadsheet)
     account.active_sheet = args.sheet
     cell, val = account_get_cell_value(account, args.month, args.category, args.user)
     print(f"Show content of {cell}: {val}")
 
 
+def cmd_pull(args):
+    api_url = args.api_url
+
+    if api_url is None:
+        try:
+            config = load_config()
+            api_url = get_kdrive_api_url(config)
+        except ConfigError:
+            pass
+
+    if api_url is None:
+        print(
+            "Error: No API URL provided. Either provide the API URL as an argument "
+            "or configure it in .easy-account.toml under [kdrive] api_url.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    parsed = api_url.rstrip("/").split("/")
+    try:
+        drive_id = int(parsed[-3])
+        file_id = int(parsed[-1])
+    except (IndexError, ValueError):
+        print(
+            "Error: Invalid API URL format. Expected "
+            "https://api.infomaniak.com/2/drive/<drive_id>/files/<file_id>",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    try:
+        api = InfomaniakApi()
+    except MissingTokenError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    file_info = api.get_file_info(drive_id, file_id)
+    destination = Path(file_info.name)
+
+    if destination.exists():
+        print(f"Error: File already exists: {destination}", file=sys.stderr)
+        sys.exit(1)
+
+    api.download_file(drive_id, file_id, str(destination))
+    print(f"Downloaded: {destination}")
+
+
 def cmd_insert(args):
+    if args.verbose:
+        spreadsheet_path = Path(args.spreadsheet)
+        print(f"Processing spreadsheet: {spreadsheet_path.absolute()}")
+        amounts_str = " + ".join(str(a) for a in args.amount)
+        print(f"Adding {amounts_str} into category {args.category} for month {args.month}")
+    print(f"Processing banking accounts from: {args.spreadsheet}")
+    validate_insert_show_args(args)
+
     try:
         config = load_config()
     except ConfigError:
@@ -199,6 +302,8 @@ Autocompletion:
         "insert", help="Insert new entry into account spreadsheet"
     )
     parser_show = subparsers.add_parser("show", help="Show cell value")
+    parser_pull = subparsers.add_parser("pull", help="Download a file from Infomaniak kdrive")
+
     add_cmn_args_parsers([parser_insert, parser_show])
 
     parser_insert.add_argument(
@@ -228,6 +333,14 @@ Autocompletion:
     )
     parser_insert.set_defaults(func=cmd_insert)
     parser_show.set_defaults(func=cmd_show)
+    parser_pull.set_defaults(func=cmd_pull)
+
+    parser_pull.add_argument(
+        "api_url",
+        type=str,
+        nargs="?",
+        help="API URL of the file to download (e.g., https://api.infomaniak.com/2/drive/1475057/files/9)",
+    )
 
     parser.add_argument(
         "-v",
@@ -242,54 +355,11 @@ Autocompletion:
 
     args = parser.parse_args()
 
-    # Validate that the spreadsheet exists
-    spreadsheet_path = Path(args.spreadsheet)
-    if not spreadsheet_path.exists():
-        print(f"Error: Spreadsheet '{args.spreadsheet}' not found.", file=sys.stderr)
-        sys.exit(1)
+    # Handle pull subcommand separately (doesn't require spreadsheet)
+    if hasattr(args, "func") and args.func == cmd_pull:
+        args.func(args)
+        sys.exit(0)
 
-    # Validate config against spreadsheet if config file exists
-    try:
-        config = load_config()
-    except ConfigError:
-        config = None
-
-    if args.user is not None:
-        if config is not None:
-            valid_users = get_users(config)
-            if valid_users and args.user not in valid_users:
-                print(
-                    f"Error: User '{args.user}' not found in configuration file. "
-                    f"Valid users are: {', '.join(valid_users)}",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-        else:
-            validation_account = AccountSpreadsheet(args.spreadsheet)
-            if args.sheet:
-                validation_account.active_sheet = args.sheet
-            spreadsheet_users = validation_account.get_spreadsheet_users()
-            if spreadsheet_users and args.user not in spreadsheet_users:
-                print(
-                    f"Error: User '{args.user}' not found in spreadsheet. "
-                    f"Valid users are: {', '.join(spreadsheet_users)}",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-
-    if config is not None:
-        try:
-            validate_config_against_spreadsheet(config, args.spreadsheet, args.sheet)
-        except ConfigValidationError as e:
-            print(f"Error: Configuration validation failed:\n{e}", file=sys.stderr)
-            sys.exit(1)
-
-    if args.verbose:
-        print(f"Processing spreadsheet: {spreadsheet_path.absolute()}")
-        amounts_str = " + ".join(str(a) for a in args.amount)
-        print(f"Adding {amounts_str} into category {args.category} for month {args.month}")
-
-    print(f"Processing banking accounts from: {args.spreadsheet}")
     args.func(args)
 
 

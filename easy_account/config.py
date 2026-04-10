@@ -236,6 +236,11 @@ users = [
     "bob",
     "charlie",
 ]
+
+# Infomaniak kdrive configuration (optional)
+# Uncomment and configure to use the 'pull' subcommand
+# [kdrive]
+# api_url = "https://api.infomaniak.com/2/drive/1475057/files/9"
 """
     with open(path, "w") as f:
         f.write(example_config)
@@ -299,6 +304,30 @@ def get_spreadsheet_users(spreadsheet_path: str, sheet_name: str | None = None) 
     if sheet_name:
         account.active_sheet = sheet_name
     return account.get_spreadsheet_users()
+
+
+def get_kdrive_api_url(config: dict | None = None) -> str | None:
+    """Get the kdrive API URL from config.
+
+    Args:
+        config: Configuration dictionary. If None, loads from file.
+
+    Returns:
+        The kdrive API URL or None if not defined.
+    """
+    if config is None:
+        try:
+            config = load_config()
+        except ConfigError:
+            return None
+
+    try:
+        kdrive = config.get("kdrive", {})
+        if isinstance(kdrive, dict):
+            return kdrive.get("api_url")
+        return None
+    except Exception:
+        return None
 
 
 def is_multiuser_spreadsheet(spreadsheet_path: str, sheet_name: str | None = None) -> bool:
