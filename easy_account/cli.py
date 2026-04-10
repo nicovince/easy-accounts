@@ -201,6 +201,53 @@ def cmd_pull(args):
     print(f"Downloaded: {destination}")
 
 
+def cmd_push(args):
+    api_url = args.api_url
+
+    if api_url is None:
+        try:
+            config = load_config()
+            api_url = get_kdrive_api_url(config)
+        except ConfigError:
+            pass
+
+    if api_url is None:
+        print(
+            "Error: No API URL provided. Either provide the API URL as an argument "
+            "or configure it in .easy-account.toml under [kdrive] api_url.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    parsed = api_url.rstrip("/").split("/")
+    try:
+        drive_id = int(parsed[-3])
+        file_id = int(parsed[-1])
+    except (IndexError, ValueError):
+        print(
+            "Error: Invalid API URL format. Expected "
+            "https://api.infomaniak.com/2/drive/<drive_id>/files/<file_id>",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    try:
+        api = InfomaniakApi()
+    except MissingTokenError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    file_info = api.get_file_info(drive_id, file_id)
+    local_file = Path(file_info.name)
+
+    if not local_file.exists():
+        print(f"Error: Local file not found: {local_file}", file=sys.stderr)
+        sys.exit(1)
+
+    api.upload_file(drive_id, file_id, str(local_file))
+    print(f"Uploaded: {local_file}")
+
+
 def cmd_insert(args):
     if args.verbose:
         spreadsheet_path = Path(args.spreadsheet)
@@ -303,6 +350,7 @@ Autocompletion:
     )
     parser_show = subparsers.add_parser("show", help="Show cell value")
     parser_pull = subparsers.add_parser("pull", help="Download a file from Infomaniak kdrive")
+    parser_push = subparsers.add_parser("push", help="Upload a file to Infomaniak kdrive")
 
     add_cmn_args_parsers([parser_insert, parser_show])
 
@@ -334,12 +382,20 @@ Autocompletion:
     parser_insert.set_defaults(func=cmd_insert)
     parser_show.set_defaults(func=cmd_show)
     parser_pull.set_defaults(func=cmd_pull)
+    parser_push.set_defaults(func=cmd_push)
 
     parser_pull.add_argument(
         "api_url",
         type=str,
         nargs="?",
         help="API URL of the file to download (e.g., https://api.infomaniak.com/2/drive/1475057/files/9)",
+    )
+
+    parser_push.add_argument(
+        "api_url",
+        type=str,
+        nargs="?",
+        help="API URL of the file to upload (e.g., https://api.infomaniak.com/2/drive/1475057/files/9)",
     )
 
     parser.add_argument(
@@ -355,8 +411,8 @@ Autocompletion:
 
     args = parser.parse_args()
 
-    # Handle pull subcommand separately (doesn't require spreadsheet)
-    if hasattr(args, "func") and args.func == cmd_pull:
+    # Handle pull/push subcommand separately (doesn't require spreadsheet)
+    if hasattr(args, "func") and args.func in (cmd_pull, cmd_push):
         args.func(args)
         sys.exit(0)
 

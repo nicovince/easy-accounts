@@ -9,6 +9,8 @@ Fill banking accounts spreadsheet from the command line.
 ```bash
 easy-account insert <spreadsheet> <sheet> <month> <category> <amount> [<amount> ...] [OPTIONS]
 easy-account show <spreadsheet> <sheet> <month> <category> [OPTIONS]
+easy-account pull [api_url]
+easy-account push [api_url]
 ```
 
 ### Arguments
@@ -30,6 +32,36 @@ easy-account show <spreadsheet> <sheet> <month> <category> [OPTIONS]
 #### Common options
 - `-v, --verbose`: Enable verbose output
 - `--version`: Show version information
+
+### Pull and Push Commands
+
+The `pull` and `push` commands allow you to synchronize files with Infomaniak kdrive.
+
+#### `pull` command
+Download a file from Infomaniak kdrive:
+```bash
+easy-account pull [api_url]
+```
+
+If `api_url` is not provided, it is read from the `kdrive.api_url` entry in `.easy-account.toml`.
+
+The API URL format is: `https://api.infomaniak.com/2/drive/<drive_id>/files/<file_id>`
+
+#### `push` command
+Upload a file to Infomaniak kdrive:
+```bash
+easy-account push [api_url]
+```
+
+If `api_url` is not provided, it is read from the `kdrive.api_url` entry in `.easy-account.toml`.
+
+The push command uploads the local file (determined by the file name from the API URL response) to kdrive.
+
+Example:
+```bash
+easy-account pull https://api.infomaniak.com/2/drive/1475057/files/9
+easy-account push https://api.infomaniak.com/2/drive/1475057/files/9
+```
 
 ### Examples
 

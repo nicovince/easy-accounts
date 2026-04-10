@@ -173,3 +173,52 @@ class TestDownloadUrl:
         """Test DownloadUrl creation."""
         download_url = DownloadUrl(url="https://test.com/download")
         assert download_url.url == "https://test.com/download"
+
+
+class TestInfomaniakApiUpload:
+    """Tests for InfomaniakApi upload_file method."""
+
+    def test_upload_file_raises_when_file_not_found(self, monkeypatch):
+        """Test that upload_file raises FileNotFoundError if local file doesn't exist."""
+        monkeypatch.setenv("IK_TOKEN", "test_token")
+        api = InfomaniakApi()
+
+        with pytest.raises(FileNotFoundError) as exc_info:
+            api.upload_file(1475057, 9, "/nonexistent/file.xlsx")
+
+        assert "not found" in str(exc_info.value)
+
+    def test_upload_file_success(self, monkeypatch, tmp_path):
+        """Test successful file upload."""
+        monkeypatch.setenv("IK_TOKEN", "test_token")
+        api = InfomaniakApi()
+
+        test_file = tmp_path / "test.xlsx"
+        test_file.write_bytes(b"test content")
+
+        with patch.object(api._session, "post") as mock_post:
+            mock_post.return_value = MagicMock(status_code=200, text="success")
+
+            api.upload_file(1475057, 9, str(test_file))
+
+            mock_post.assert_called_once()
+            call_args = mock_post.call_args
+            url = call_args.kwargs.get("url") or call_args[0][0]
+            assert "total_size=12" in url
+            assert "file_id=9" in url
+
+    def test_upload_file_failure(self, monkeypatch, tmp_path):
+        """Test failed file upload raises InfomaniakApiError."""
+        monkeypatch.setenv("IK_TOKEN", "test_token")
+        api = InfomaniakApi()
+
+        test_file = tmp_path / "test.xlsx"
+        test_file.write_bytes(b"test content")
+
+        with patch.object(api._session, "post") as mock_post:
+            mock_post.return_value = MagicMock(status_code=500, text="Internal Error")
+
+            with pytest.raises(InfomaniakApiError) as exc_info:
+                api.upload_file(1475057, 9, str(test_file))
+
+            assert "500" in str(exc_info.value)

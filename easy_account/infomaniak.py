@@ -135,6 +135,8 @@ class InfomaniakApi:
             raise InfomaniakApiError(f"API returned error: {data}")
         return DownloadUrl(url=data["data"]["temporary_url"])
 
+    BASE_URL_V3 = "https://api.infomaniak.com/3/drive"
+
     def download_file(self, drive_id: int, file_id: int, destination: str) -> None:
         """Download a file from kdrive.
 
@@ -160,3 +162,33 @@ class InfomaniakApi:
         with open(destination, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
+
+    def upload_file(self, drive_id: int, file_id: int, file_path: str) -> None:
+        """Upload/update a file to kdrive.
+
+        Args:
+            drive_id: The drive ID.
+            file_id: The file ID to update.
+            file_path: Path to the local file to upload.
+
+        Raises:
+            InfomaniakApiError: If the API request fails.
+            FileNotFoundError: If the local file does not exist.
+        """
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        file_size = os.path.getsize(file_path)
+        url = f"{self.BASE_URL_V3}/{drive_id}/upload?total_size={file_size}&file_id={file_id}"
+
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+        }
+
+        with open(file_path, "rb") as f:
+            response = self._session.post(url, headers=headers, data=f)
+
+        if response.status_code not in (200, 201):
+            raise InfomaniakApiError(
+                f"Upload failed with status {response.status_code}: {response.text}"
+            )

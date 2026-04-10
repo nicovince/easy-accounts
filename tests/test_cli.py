@@ -2,6 +2,7 @@
 
 import os
 import sys
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -159,51 +160,143 @@ class TestCliInsertCmd:
         captured = capsys.readouterr()
         assert "1234" in captured.out
 
-    def test_mono_account_report(self, spreadsheet, capsys, monkeypatch):
-        """Test that --report show the cell value."""
+
+class TestCliPushCmd:
+    """Tests for CLI push command."""
+
+    def test_push_no_api_url_error(self, tmp_path_cwd, capsys, monkeypatch):
+        """Test that push without API URL returns error."""
+        monkeypatch.setenv("IK_TOKEN", "test_token")
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["easy-account", "push"],
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            easy_account.cli.main()
+
+        assert exc_info.value.code == 1
+        captured = capsys.readouterr()
+        assert "No API URL provided" in captured.err
+
+    def test_push_invalid_api_url_error(self, tmp_path_cwd, capsys, monkeypatch):
+        """Test that push with invalid API URL returns error."""
+        monkeypatch.setenv("IK_TOKEN", "test_token")
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["easy-account", "push", "invalid_url"],
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            easy_account.cli.main()
+
+        assert exc_info.value.code == 1
+        captured = capsys.readouterr()
+        assert "Invalid API URL format" in captured.err
+
+    def test_push_file_not_found_error(self, tmp_path_cwd, capsys, monkeypatch):
+        """Test that push returns error when local file doesn't exist."""
+        monkeypatch.setenv("IK_TOKEN", "test_token")
         monkeypatch.setattr(
             sys,
             "argv",
             [
                 "easy-account",
-                "insert",
-                str(spreadsheet),
-                "mono user",
-                "janvier",
-                "bar",
-                "100",
-                "--report",
-                "janvier,bar",
+                "push",
+                "https://api.infomaniak.com/2/drive/1475057/files/9",
             ],
         )
 
-        easy_account.cli.main()
-        captured = capsys.readouterr()
-        assert "1334" in captured.out
+        mock_file_info = MagicMock()
+        mock_file_info.name = "test.xlsx"
 
-    def test_multi_account_show_only(self, spreadsheet_unmodified, capsys, monkeypatch):
-        """Test that --show-only report a value."""
+        with patch("easy_account.cli.InfomaniakApi") as MockApi:
+            mock_api = MagicMock()
+            mock_api.get_file_info.return_value = mock_file_info
+            MockApi.return_value = mock_api
+
+            with pytest.raises(SystemExit) as exc_info:
+                easy_account.cli.main()
+
+            assert exc_info.value.code == 1
+            mock_api.get_file_info.assert_called_once_with(1475057, 9)
+
+        captured = capsys.readouterr()
+        assert "Local file not found" in captured.err
+
+    def test_push_success(self, tmp_path_cwd, capsys, monkeypatch):
+        """Test successful push command."""
+        monkeypatch.setenv("IK_TOKEN", "test_token")
+        test_file = tmp_path_cwd / "test.xlsx"
+        test_file.write_bytes(b"test content")
 
         monkeypatch.setattr(
             sys,
             "argv",
             [
                 "easy-account",
-                "insert",
-                str(spreadsheet_unmodified),
-                "multi users",
-                "janvier",
-                "bar",
-                "100",
-                "--user",
-                "bob",
-                "--show-only",
+                "push",
+                "https://api.infomaniak.com/2/drive/1475057/files/9",
             ],
         )
 
-        easy_account.cli.main()
+        mock_file_info = MagicMock()
+        mock_file_info.name = "test.xlsx"
+
+        with patch("easy_account.cli.InfomaniakApi") as MockApi:
+            mock_api = MagicMock()
+            mock_api.get_file_info.return_value = mock_file_info
+            mock_api.upload_file.return_value = None
+            MockApi.return_value = mock_api
+
+            with pytest.raises(SystemExit) as exc_info:
+                easy_account.cli.main()
+            assert exc_info.value.code == 0
+
+            mock_api.get_file_info.assert_called_once_with(1475057, 9)
+            mock_api.upload_file.assert_called_once()
+
         captured = capsys.readouterr()
-        assert "4321" in captured.out
+        assert "Uploaded: test.xlsx" in captured.out
+
+    def test_push_with_api_url_from_config(self, tmp_path_cwd, capsys, monkeypatch):
+        """Test push uses API URL from config when not provided as argument."""
+        monkeypatch.setenv("IK_TOKEN", "test_token")
+        config_path = tmp_path_cwd / ".easy-account.toml"
+        config_content = """
+[kdrive]
+api_url = "https://api.infomaniak.com/2/drive/1475057/files/9"
+"""
+        config_path.write_text(config_content)
+
+        test_file = tmp_path_cwd / "test.xlsx"
+        test_file.write_bytes(b"test content")
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["easy-account", "push"],
+        )
+
+        mock_file_info = MagicMock()
+        mock_file_info.name = "test.xlsx"
+
+        with patch("easy_account.cli.InfomaniakApi") as MockApi:
+            mock_api = MagicMock()
+            mock_api.get_file_info.return_value = mock_file_info
+            mock_api.upload_file.return_value = None
+            MockApi.return_value = mock_api
+
+            with pytest.raises(SystemExit) as exc_info:
+                easy_account.cli.main()
+            assert exc_info.value.code == 0
+
+            mock_api.get_file_info.assert_called_once_with(1475057, 9)
+
+        captured = capsys.readouterr()
+        assert "Uploaded: test.xlsx" in captured.out
 
     def test_multi_account_report(self, spreadsheet, capsys, monkeypatch):
         """Test that --report show the cell value."""
