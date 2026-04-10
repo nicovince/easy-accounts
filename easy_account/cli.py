@@ -72,6 +72,17 @@ def add_cmn_args_parsers(parsers: list):
             user_arg.completer = lambda prefix, parsed_args, **kwargs: users_choices or []  # type: ignore
 
 
+def parse_report_opt(report: str) -> list[str]:
+    res = report.split(",")
+    assert len(res) == 2 or len(res) == 3
+    month = res[0]
+    category = res[1]
+    user = None
+    if len(res) == 3:
+        user = res[2]
+    return (month, category, user)
+
+
 def account_get_cell_value(
     account: AccountSpreadsheet, month: str, category: str, user: str = None
 ):
@@ -100,6 +111,10 @@ def cmd_insert(args):
         account.save()
     else:
         cell, val = account_get_cell_value(account, args.month, args.category, args.user)
+        print(f"Show content of {cell}: {val}")
+    if args.report is not None:
+        (month, category, user) = parse_report_opt(args.report)
+        cell, val = account_get_cell_value(account, month, category, user)
         print(f"Show content of {cell}: {val}")
 
 
@@ -181,6 +196,14 @@ Autocompletion:
         type=str,
         default=None,
         help="A comment to the cell regarding the amount spent",
+    )
+
+    parser_insert.add_argument(
+        "--report",
+        type=str,
+        default=None,
+        help="A cell for which the updated value must be reported. "
+        "Format 'col-name,row-name[,user-name]'",
     )
 
     parser_insert.add_argument(

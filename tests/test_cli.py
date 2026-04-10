@@ -159,6 +159,28 @@ class TestCliInsertCmd:
         captured = capsys.readouterr()
         assert "1234" in captured.out
 
+    def test_mono_account_report(self, spreadsheet, capsys, monkeypatch):
+        """Test that --report show the cell value."""
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "insert",
+                str(spreadsheet),
+                "mono user",
+                "janvier",
+                "bar",
+                "100",
+                "--report",
+                "janvier,bar",
+            ],
+        )
+
+        easy_account.cli.main()
+        captured = capsys.readouterr()
+        assert "1334" in captured.out
+
     def test_multi_account_show_only(self, spreadsheet_unmodified, capsys, monkeypatch):
         """Test that --show-only report a value."""
 
@@ -182,6 +204,30 @@ class TestCliInsertCmd:
         easy_account.cli.main()
         captured = capsys.readouterr()
         assert "4321" in captured.out
+
+    def test_multi_account_report(self, spreadsheet, capsys, monkeypatch):
+        """Test that --report show the cell value."""
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "insert",
+                str(spreadsheet),
+                "multi users",
+                "janvier",
+                "bar",
+                "100",
+                "--user",
+                "bob",
+                "--report",
+                "janvier,bar,bob",
+            ],
+        )
+
+        easy_account.cli.main()
+        captured = capsys.readouterr()
+        assert "4421" in captured.out
 
 
 class TestCliShowCmd:
