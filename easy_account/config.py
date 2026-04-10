@@ -119,6 +119,31 @@ def get_categories(config: dict | None = None) -> list[str]:
         raise ConfigError(f"Failed to read categories from config: {e}")
 
 
+def get_report(config: dict | None = None) -> str | None:
+    """Get default report cell from config.
+
+    Args:
+        config: Configuration dictionary. If None, loads from file.
+
+    Returns:
+        Default report cell string (format: 'month,category[,user]') or None if not defined.
+    """
+    if config is None:
+        try:
+            config = load_config()
+        except ConfigError:
+            return None
+
+    try:
+        report = config.get("report")
+        if isinstance(report, dict):
+            report = report.get("report")
+
+        return report if report else None
+    except Exception:
+        return None
+
+
 def get_users(config: dict | None = None) -> list[str]:
     """Get list of valid users from config.
 

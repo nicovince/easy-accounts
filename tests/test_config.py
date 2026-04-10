@@ -13,6 +13,7 @@ from easy_account.config import (
     find_config_file,
     get_categories,
     get_months,
+    get_report,
     get_users,
     get_spreadsheet_users,
     is_multiuser_spreadsheet,
@@ -195,6 +196,51 @@ users = ["john", "jane", "jack"]
     users = get_users(config)
 
     assert users == ["john", "jane", "jack"]
+
+
+def test_get_report_valid(tmp_path):
+    """Test getting default report from valid config."""
+    config_path = tmp_path / ".easy-account.toml"
+    config_content = """
+[months]
+months = ["janvier"]
+
+[categories]
+categories = ["groceries"]
+
+[report]
+report = "janvier,groceries"
+"""
+    config_path.write_text(config_content)
+
+    config = load_config(config_path)
+    report = get_report(config)
+
+    assert report == "janvier,groceries"
+
+
+def test_get_report_not_defined(tmp_path):
+    """Test getting report when not defined in config."""
+    config_path = tmp_path / ".easy-account.toml"
+    config_content = """
+[months]
+months = ["janvier"]
+
+[categories]
+categories = ["groceries"]
+"""
+    config_path.write_text(config_content)
+
+    config = load_config(config_path)
+    report = get_report(config)
+
+    assert report is None
+
+
+def test_get_report_without_config_file(tmp_path_cwd):
+    """Test getting report when config file doesn't exist returns None."""
+    report = get_report()
+    assert report is None
 
 
 class TestIsMultiuserSpreadsheet:

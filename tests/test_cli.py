@@ -229,6 +229,76 @@ class TestCliInsertCmd:
         captured = capsys.readouterr()
         assert "4421" in captured.out
 
+    def test_default_report_from_config(self, spreadsheet, capsys, monkeypatch, tmp_path_cwd):
+        """Test that default report from config is used when --report not specified."""
+        config_path = tmp_path_cwd / ".easy-account.toml"
+        config_content = """
+[months]
+months = ["janvier", "fevrier", "mars"]
+
+[categories]
+categories = ["foo", "bar"]
+
+[report]
+report = "janvier,bar"
+"""
+        config_path.write_text(config_content)
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "insert",
+                str(spreadsheet),
+                "mono user",
+                "janvier",
+                "bar",
+                "100",
+            ],
+        )
+
+        easy_account.cli.main()
+        captured = capsys.readouterr()
+        assert "1334" in captured.out
+
+    def test_cli_report_overrides_config_default(
+        self, spreadsheet, capsys, monkeypatch, tmp_path_cwd
+    ):
+        """Test that explicit --report overrides config default."""
+        config_path = tmp_path_cwd / ".easy-account.toml"
+        config_content = """
+[months]
+months = ["janvier", "fevrier", "mars"]
+
+[categories]
+categories = ["foo", "bar"]
+
+[report]
+report = "janvier,foo"
+"""
+        config_path.write_text(config_content)
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "insert",
+                str(spreadsheet),
+                "mono user",
+                "janvier",
+                "bar",
+                "100",
+                "--report",
+                "janvier,bar",
+            ],
+        )
+
+        easy_account.cli.main()
+        captured = capsys.readouterr()
+        assert "1334" in captured.out
+
 
 class TestCliShowCmd:
     """Tests for CLI show command."""

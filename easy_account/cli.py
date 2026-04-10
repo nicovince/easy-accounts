@@ -10,6 +10,7 @@ from easy_account.config import (
     get_months,
     get_categories,
     get_users,
+    get_report,
     ConfigError,
     ConfigValidationError,
     create_config_from_spreadsheet,
@@ -99,6 +100,15 @@ def cmd_show(args):
 
 
 def cmd_insert(args):
+    try:
+        config = load_config()
+    except ConfigError:
+        config = None
+
+    # Use default report from config if --report not specified
+    if args.report is None:
+        args.report = get_report(config)
+
     account = AccountSpreadsheet(args.spreadsheet)
     account.active_sheet = args.sheet
     if args.comment is not None:
