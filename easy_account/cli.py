@@ -292,7 +292,7 @@ def main():
         description="Fill banking accounts spreadsheet from the command line",
         epilog="""
 Configuration:
-  This tool requires a .easy-account.toml file in the current directory.
+  This tool may use a .easy-account.toml file in the current directory.
   Use 'easy-account --init' to create an example configuration file.
 
 Autocompletion:
