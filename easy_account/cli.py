@@ -18,6 +18,7 @@ from easy_account.config import (
     create_config_from_spreadsheet,
     validate_config_against_spreadsheet,
 )
+import easy_account.config as ea_config
 from easy_account.infomaniak import InfomaniakApi, MissingTokenError
 
 try:
@@ -290,9 +291,9 @@ def main():
     parser = argparse.ArgumentParser(
         prog="easy-account",
         description="Fill banking accounts spreadsheet from the command line",
-        epilog="""
+        epilog=f"""
 Configuration:
-  This tool may use a .easy-account.toml file in the current directory.
+  This tool may use a {ea_config.DEFAULT_CFG_FILE} file in the current directory.
   Use 'easy-account --init' to create an example configuration file.
 
 Autocompletion:
@@ -308,7 +309,7 @@ Autocompletion:
         "--init",
         type=str,
         nargs="?",
-        const=".easy-account.toml",
+        const=ea_config.DEFAULT_CFG_FILE,
         metavar="SPREADSHEET",
         help="Create a configuration file. If a spreadsheet path is provided, "
         "extract months, categories and users from it.",
@@ -323,7 +324,7 @@ Autocompletion:
     # Handle --init flag early (before requiring positional arguments)
     if "--init" in sys.argv:
         args = parser.parse_args()
-        config_path = Path(".easy-account.toml")
+        config_path = Path(ea_config.DEFAULT_CFG_FILE)
         if config_path.exists():
             print(f"Configuration file already exists at {config_path.absolute()}")
             sys.exit(1)

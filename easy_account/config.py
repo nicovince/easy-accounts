@@ -4,6 +4,8 @@ from pathlib import Path
 
 from easy_account.account import AccountSpreadsheet
 
+DEFAULT_CFG_FILE = ".easy-account.toml"
+
 # Use tomllib for Python 3.11+ or tomli for older versions
 try:
     import tomllib
@@ -29,7 +31,7 @@ def find_config_file() -> Path | None:
     Returns:
         Path to the config file if found, None otherwise.
     """
-    config_path = Path(".easy-account.toml")
+    config_path = Path(DEFAULT_CFG_FILE)
     if config_path.exists():
         return config_path
     return None
@@ -51,7 +53,7 @@ def load_config(config_path: Path | None = None) -> dict:
         config_path = find_config_file()
 
     if config_path is None:
-        raise ConfigError("Configuration file .easy-account.toml not found in current directory")
+        raise ConfigError(f"Configuration file {DEFAULT_CFG_FILE} not found in current directory")
 
     try:
         with open(config_path, "rb") as f:
@@ -189,7 +191,7 @@ def get_users(config: dict | None = None) -> list[str]:
         raise ConfigError(f"Failed to read users from config: {e}")
 
 
-def create_example_config(path: Path = Path(".easy-account.toml")) -> None:
+def create_example_config(path: Path = Path(DEFAULT_CFG_FILE)) -> None:
     """Create an example configuration file.
 
     Args:
@@ -349,7 +351,7 @@ def is_multiuser_spreadsheet(spreadsheet_path: str, sheet_name: str | None = Non
 def create_config_from_spreadsheet(
     spreadsheet_path: str,
     sheet_name: str | None = None,
-    output_path: Path = Path(".easy-account.toml"),
+    output_path: Path = Path(DEFAULT_CFG_FILE),
 ) -> None:
     """Create a configuration file from an existing spreadsheet.
 
