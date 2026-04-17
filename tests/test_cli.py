@@ -298,6 +298,10 @@ api_url = "https://api.infomaniak.com/2/drive/1475057/files/9"
         captured = capsys.readouterr()
         assert "Uploaded: test.xlsx" in captured.out
 
+
+class TestCliDefaultReportFromConfig:
+    """Tests for default report from config with omitted month."""
+
     def test_multi_account_report(self, spreadsheet, capsys, monkeypatch):
         """Test that --report show the cell value."""
         monkeypatch.setattr(
@@ -463,10 +467,6 @@ report = "janvier,foo"
         easy_account.cli.main()
         captured = capsys.readouterr()
         assert "4421" in captured.out
-
-
-class TestCliDefaultReportFromConfig:
-    """Tests for default report from config with omitted month."""
 
     def test_default_report_with_omitted_month_uses_current_month(
         self, spreadsheet, capsys, monkeypatch, tmp_path_cwd
