@@ -53,6 +53,51 @@ class TestCliUserValidation:
         captured = capsys.readouterr()
         assert "invalid_user" in captured.err
 
+    def test_invalid_user_with_custom_config_returns_error(
+        self, tmp_path_cwd, spreadsheet, capsys, monkeypatch
+    ):
+        """Test that invalid --user returns error when config file exists."""
+
+        config_path = tmp_path_cwd / ".easy-account-custom.toml"
+        create_example_config(config_path)
+        config_path = tmp_path_cwd / ".easy-account.toml"
+        config_content = """
+[months]
+months = ["janvier"]
+
+[categories]
+categories = ["foo"]
+
+[users]
+users = ["john", "jane", "jack"]
+"""
+        config_path.write_text(config_content)
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "--config",
+                ".easy-account-custom.toml",
+                "insert",
+                str(spreadsheet),
+                "mono user",
+                "janvier",
+                "foo",
+                "100",
+                "--user",
+                "john",
+            ],
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            easy_account.cli.main()
+
+        assert exc_info.value.code == 1
+        captured = capsys.readouterr()
+        assert "john" in captured.err
+
     def test_invalid_user_without_config_returns_error(
         self, tmp_path_cwd, spreadsheet, capsys, monkeypatch
     ):

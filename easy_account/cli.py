@@ -27,11 +27,11 @@ except ImportError:
     argcomplete = None  # type: ignore
 
 
-def add_cmn_args_parsers(parsers: list):
+def add_cmn_args_parsers(parsers: list, config_path: Path):
     """Add args common to parsers"""
     # Try to load config for providing choices
     try:
-        config = load_config()
+        config = load_config(config_path)
         months_choices = get_months(config)
         categories_choices = get_categories(config)
         users_choices = get_users(config)
@@ -112,7 +112,7 @@ def validate_insert_show_args(args):
 
     # Validate config against spreadsheet if config file exists
     try:
-        config = load_config()
+        config = load_config(args.config)
     except ConfigError:
         config = None
 
@@ -160,7 +160,7 @@ def cmd_pull(args):
 
     if api_url is None:
         try:
-            config = load_config()
+            config = load_config(args.config)
             api_url = get_kdrive_api_url(config)
         except ConfigError:
             pass
@@ -207,7 +207,7 @@ def cmd_push(args):
 
     if api_url is None:
         try:
-            config = load_config()
+            config = load_config(args.config)
             api_url = get_kdrive_api_url(config)
         except ConfigError:
             pass
@@ -259,7 +259,7 @@ def cmd_insert(args):
     validate_insert_show_args(args)
 
     try:
-        config = load_config()
+        config = load_config(args.config)
     except ConfigError:
         config = None
 
@@ -316,6 +316,14 @@ Autocompletion:
     )
 
     parser.add_argument(
+        "-c",
+        "--config",
+        type=str,
+        help=f"Path to an alternative config file to {ea_config.DEFAULT_CFG_FILE}",
+        default=ea_config.DEFAULT_CFG_FILE,
+    )
+
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {importlib.metadata.version('easy-account')}",
@@ -353,7 +361,8 @@ Autocompletion:
     parser_pull = subparsers.add_parser("pull", help="Download a file from Infomaniak kdrive")
     parser_push = subparsers.add_parser("push", help="Upload a file to Infomaniak kdrive")
 
-    add_cmn_args_parsers([parser_insert, parser_show])
+    args, remaining = parser.parse_known_args()
+    add_cmn_args_parsers([parser_insert, parser_show], args.config)
 
     parser_insert.add_argument(
         "amount",
