@@ -58,14 +58,14 @@ def add_cmn_args_parsers(parsers: list, config_path: Path):
             type=str,
             help="The month the amount was spent",
         )
-        month_arg.completer = lambda prefix, parsed_args, **kwargs: months_choices or []  # type: ignore
+        month_arg.choices = months_choices
 
         category_arg = p.add_argument(
             "category",
             type=str,
             help="The category of the amount spent",
         )
-        category_arg.completer = lambda prefix, parsed_args, **kwargs: categories_choices or []  # type: ignore
+        category_arg.choices = categories_choices
 
         user_arg = p.add_argument(
             "--user",
@@ -74,7 +74,7 @@ def add_cmn_args_parsers(parsers: list, config_path: Path):
             help="In case of multi-user account, the user who made the expanse",
         )
         if users_choices:
-            user_arg.completer = lambda prefix, parsed_args, **kwargs: users_choices or []  # type: ignore
+            user_arg.choices = users_choices
 
 
 def parse_report_opt(report: str, current_month: str = None) -> tuple[str, str, str | None]:
