@@ -315,6 +315,14 @@ Autocompletion:
         "extract months, categories and users from it.",
     )
 
+    preparser = argparse.ArgumentParser(add_help=False)
+    preparser.add_argument(
+        "-c",
+        "--config",
+        type=str,
+        help=f"Path to an alternative config file to {ea_config.DEFAULT_CFG_FILE}",
+        default=ea_config.DEFAULT_CFG_FILE,
+    )
     parser.add_argument(
         "-c",
         "--config",
@@ -361,7 +369,7 @@ Autocompletion:
     parser_pull = subparsers.add_parser("pull", help="Download a file from Infomaniak kdrive")
     parser_push = subparsers.add_parser("push", help="Upload a file to Infomaniak kdrive")
 
-    args, remaining = parser.parse_known_args()
+    args, remaining = preparser.parse_known_args()
     add_cmn_args_parsers([parser_insert, parser_show], args.config)
 
     parser_insert.add_argument(
@@ -391,8 +399,6 @@ Autocompletion:
     )
     parser_insert.set_defaults(func=cmd_insert)
     parser_show.set_defaults(func=cmd_show)
-    parser_pull.set_defaults(func=cmd_pull)
-    parser_push.set_defaults(func=cmd_push)
 
     parser_pull.add_argument(
         "api_url",
@@ -400,6 +406,7 @@ Autocompletion:
         nargs="?",
         help="API URL of the file to download (e.g., https://api.infomaniak.com/2/drive/1475057/files/9)",
     )
+    parser_pull.set_defaults(func=cmd_pull)
 
     parser_push.add_argument(
         "api_url",
@@ -407,6 +414,7 @@ Autocompletion:
         nargs="?",
         help="API URL of the file to upload (e.g., https://api.infomaniak.com/2/drive/1475057/files/9)",
     )
+    parser_push.set_defaults(func=cmd_push)
 
     parser.add_argument(
         "-v",
