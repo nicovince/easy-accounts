@@ -27,19 +27,22 @@ except ImportError:
     argcomplete = None  # type: ignore
 
 
+def make_completer(getter_func):
+    """Factory for argparse completer methods"""
+
+    def completer(prefix, parsed_args, **kwargs):
+        try:
+            config = load_config(parsed_args.config)
+            choices = getter_func(config)
+        except ConfigError:
+            choices = []
+        return (choice for choice in choices if choice.startswith(prefix))
+
+    return completer
+
+
 def add_cmn_args_parsers(parsers: list, config_path: Path):
     """Add args common to parsers"""
-    # Try to load config for providing choices
-    try:
-        config = load_config(config_path)
-        months_choices = get_months(config)
-        categories_choices = get_categories(config)
-        users_choices = get_users(config)
-    except ConfigError:
-        # Config file doesn't exist yet, allow any input
-        months_choices = None
-        categories_choices = None
-        users_choices = None
 
     for p in parsers:
         p.add_argument(
@@ -58,14 +61,14 @@ def add_cmn_args_parsers(parsers: list, config_path: Path):
             type=str,
             help="The month the amount was spent",
         )
-        month_arg.choices = months_choices
+        month_arg.completer = make_completer(get_months)
 
         category_arg = p.add_argument(
             "category",
             type=str,
             help="The category of the amount spent",
         )
-        category_arg.choices = categories_choices
+        category_arg.completer = make_completer(get_categories)
 
         user_arg = p.add_argument(
             "--user",
@@ -73,8 +76,7 @@ def add_cmn_args_parsers(parsers: list, config_path: Path):
             default=None,
             help="In case of multi-user account, the user who made the expanse",
         )
-        if users_choices:
-            user_arg.choices = users_choices
+        user_arg.completer = make_completer(get_users)
 
 
 def parse_report_opt(report: str, current_month: str = None) -> tuple[str, str, str | None]:
