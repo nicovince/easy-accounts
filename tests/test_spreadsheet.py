@@ -236,3 +236,21 @@ class TestSpreadsheetEvaluate:
         ws["A3"] = "=MAX(A1 - A2, 0) + B1"
         val = sample_spreadsheet.evaluate(ws["A3"])
         assert val == 0
+
+    def test_spreadsheet_evaluate_with_merged_cells(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws.merge_cells("A1:B1")
+        ws["A1"] = "=5"
+        ws["A2"] = "=2"
+        ws["A3"] = "=MAX(A1, A2)"
+        val = sample_spreadsheet.evaluate(ws["A3"])
+        assert val == 5
+
+        ws["A4"] = "=MAX(A1 - A2, 0)"
+        val = sample_spreadsheet.evaluate(ws["A4"])
+        assert val == 3
+
+        ws["A5"] = "=MAX(A2 - A1, 0)"
+        val = sample_spreadsheet.evaluate(ws["A5"])
+        sample_spreadsheet.save()
+        assert val == 0
