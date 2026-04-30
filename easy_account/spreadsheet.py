@@ -94,6 +94,8 @@ class Spreadsheet:
                 operators.append(("func", t.value.upper()))
                 func_arg_counts.append(1)
             elif t.type == "SEP":
+                while operators and operators[-1][0] != "func" and operators[-1][0] != "paren":
+                    output.append(operators.pop())
                 if func_arg_counts:
                     func_arg_counts[-1] += 1
             elif t.type == "OPERATOR-INFIX":
@@ -108,6 +110,8 @@ class Spreadsheet:
             elif t.type == "PAREN" and t.value == "(":
                 operators.append(("paren", "("))
             elif t.type == "FUNC" and t.subtype == "CLOSE":
+                while operators and operators[-1][0] != "func" and operators[-1][0] != "paren":
+                    output.append(operators.pop())
                 if operators and operators[-1][0] == "func":
                     func_token = operators.pop()
                     arg_count = func_arg_counts.pop() if func_arg_counts else 1
