@@ -146,3 +146,111 @@ class TestSpreadsheetEvaluate:
         ws["A4"] = "=SUM(A1:A3)"
         val = sample_spreadsheet.evaluate(ws["A4"])
         assert val == 4
+
+    def test_spreadsheet_evaluate_simple_formula(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "=3+4"
+        val = sample_spreadsheet.evaluate(ws["A1"])
+        assert val == 7
+
+    def test_spreadsheet_evaluate_priority(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "=1+3*5"
+        val = sample_spreadsheet.evaluate(ws["A1"])
+        assert val == 16
+
+    def test_spreadsheet_evaluate_parenthesis(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "=(1+3)*5"
+        val = sample_spreadsheet.evaluate(ws["A1"])
+        assert val == 20
+
+    def test_spreadsheet_evaluate_cell_ref_in_formula(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "5"
+        ws["A2"] = "=A1+2"
+        val = sample_spreadsheet.evaluate(ws["A2"])
+        assert val == 7
+
+    def test_spreadsheet_evaluate_sum_function(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "1"
+        ws["A2"] = "2"
+        ws["A3"] = "3"
+        ws["A4"] = "4"
+        ws["A5"] = "=SUM(A1:A4)"
+        val = sample_spreadsheet.evaluate(ws["A5"])
+        assert val == 10
+
+    def test_spreadsheet_evaluate_sum_multiple_args(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "1"
+        ws["A2"] = "2"
+        ws["A3"] = "3"
+        ws["A4"] = "4"
+        ws["A5"] = "=SUM(A1,A2,A3,A4)"
+        val = sample_spreadsheet.evaluate(ws["A5"])
+        assert val == 10
+
+    def test_spreadsheet_evaluate_sum_multiple_args_with_formula(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "1"
+        ws["A2"] = "2"
+        ws["A3"] = "3"
+        ws["A4"] = "4"
+        ws["A5"] = "=SUM(A1+A2,A3,A4)"
+        val = sample_spreadsheet.evaluate(ws["A5"])
+        assert val == 10
+        ws["A6"] = "=SUM(A1,A2,A3+A4)"
+        val = sample_spreadsheet.evaluate(ws["A6"])
+        assert val == 10
+
+    def test_spreadsheet_evaluate_max_formula(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "1"
+        ws["A2"] = "2"
+        ws["A3"] = "=MAX(A1,A2)"
+        val = sample_spreadsheet.evaluate(ws["A3"])
+        assert val == 2
+
+    def test_spreadsheet_evaluate_max_formula_with_formula_arg(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "1"
+        ws["A2"] = "2"
+        ws["A3"] = "=MAX(A1+4,A2)"
+        val = sample_spreadsheet.evaluate(ws["A3"])
+        assert val == 5
+
+    def test_spreadsheet_evaluate_max_formula_with_formula_arg_and_add(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "1"
+        ws["A2"] = "2"
+        ws["A3"] = "=MAX(A1+4,0) + 5"
+        val = sample_spreadsheet.evaluate(ws["A3"])
+        assert val == 10
+
+    def test_spreadsheet_evaluate_max_formula_with_negative_value(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "1"
+        ws["A2"] = "2"
+        ws["A3"] = "=MAX(A1 - A2, 0) + B1"
+        val = sample_spreadsheet.evaluate(ws["A3"])
+        assert val == 0
+
+    def test_spreadsheet_evaluate_with_merged_cells(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws.merge_cells("A1:B1")
+        ws["A1"] = "=5"
+        ws["A2"] = "=2"
+        ws["A3"] = "=MAX(A1, A2)"
+        val = sample_spreadsheet.evaluate(ws["A3"])
+        assert val == 5
+
+        ws["A4"] = "=MAX(A1 - A2, 0)"
+        val = sample_spreadsheet.evaluate(ws["A4"])
+        assert val == 3
+
+        ws["A5"] = "=MAX(A2 - A1, 0)"
+        val = sample_spreadsheet.evaluate(ws["A5"])
+        sample_spreadsheet.save()
+        assert val == 0

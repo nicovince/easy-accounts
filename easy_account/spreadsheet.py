@@ -35,6 +35,13 @@ class CellRange:
 
 
 class Spreadsheet:
+    OPERATOR_PRECEDENCE = {
+        "+": 1,
+        "-": 1,
+        "*": 2,
+        "/": 2,
+    }
+
     def __init__(self, spreadsheet_path: str):
         self.path = spreadsheet_path
         self.wb = openpyxl.load_workbook(self.path)
@@ -70,6 +77,96 @@ class Spreadsheet:
             return int(s)
         return float(s)
 
+    @classmethod
+    def _infix_to_postfix(cls, tokens):
+        output = []
+        operators = []
+        i = 0
+        func_arg_counts = []
+        while i < len(tokens):
+            t = tokens[i]
+            if (t.type, t.subtype) == ("OPERAND", "NUMBER"):
+                output.append(("number", cls.from_str(t.value)))
+            elif (t.type, t.subtype) == ("OPERAND", "RANGE"):
+                cell_range = CellRange(t.value)
+                output.append(("range", cell_range))
+            elif t.type == "FUNC" and t.subtype == "OPEN":
+                operators.append(("func", t.value.upper()))
+                func_arg_counts.append(1)
+            elif t.type == "SEP":
+                while operators and operators[-1][0] != "func" and operators[-1][0] != "paren":
+                    output.append(operators.pop())
+                if func_arg_counts:
+                    func_arg_counts[-1] += 1
+            elif t.type == "OPERATOR-INFIX":
+                while (
+                    operators
+                    and operators[-1][0] == "op"
+                    and cls.OPERATOR_PRECEDENCE.get(operators[-1][1], 0)
+                    >= cls.OPERATOR_PRECEDENCE.get(t.value, 0)
+                ):
+                    output.append(operators.pop())
+                operators.append(("op", t.value))
+            elif t.type == "PAREN" and t.value == "(":
+                operators.append(("paren", "("))
+            elif t.type == "FUNC" and t.subtype == "CLOSE":
+                while operators and operators[-1][0] != "func" and operators[-1][0] != "paren":
+                    output.append(operators.pop())
+                if operators and operators[-1][0] == "func":
+                    func_token = operators.pop()
+                    arg_count = func_arg_counts.pop() if func_arg_counts else 1
+                    output.append(("func", func_token[1], arg_count))
+            elif t.type == "PAREN" and t.value == ")":
+                while operators and operators[-1] != ("paren", "("):
+                    output.append(operators.pop())
+                operators.pop()
+                if operators and operators[-1][0] == "func":
+                    func_token = operators.pop()
+                    arg_count = func_arg_counts.pop() if func_arg_counts else 1
+                    output.append(("func", func_token[1], arg_count))
+            i += 1
+        while operators:
+            output.append(operators.pop())
+        return output
+
+    def _evaluate_postfix(self, postfix):
+        stack = []
+        for item in postfix:
+            if item[0] == "number":
+                stack.append(item[1])
+            elif item[0] == "range":
+                cell_range = item[1]
+                if cell_range.is_single_cell():
+                    cell = self.get_sheet(cell_range.get_parent_sheet_name())[
+                        cell_range.get_start_pos()
+                    ]
+                    stack.append(self.evaluate(cell))
+                else:
+                    vals = self.evaluate_range(cell_range)
+                    stack.append(sum(vals))
+            elif item[0] == "func":
+                arg_count = item[2] if len(item) > 2 else 1
+                args = []
+                for _ in range(arg_count):
+                    args.append(stack.pop())
+                args.reverse()
+                if item[1] == "SUM(":
+                    stack.append(sum(args))
+                elif item[1] == "MAX(":
+                    stack.append(max(args))
+            elif item[0] == "op":
+                b = stack.pop()
+                a = stack.pop()
+                if item[1] == "+":
+                    stack.append(a + b)
+                elif item[1] == "-":
+                    stack.append(a - b)
+                elif item[1] == "*":
+                    stack.append(a * b)
+                elif item[1] == "/":
+                    stack.append(a / b)
+        return stack[0] if stack else 0
+
     @staticmethod
     def is_token_simple(token):
         return (
@@ -88,27 +185,17 @@ class Spreadsheet:
 
     def evaluate(self, cell: Cell):
         cell_val = cell.value
-        tokens = Tokenizer(cell_val)
-        op = ""
-        for t in tokens.items:
-            if self.is_token_simple(t):
-                op += f"{t.value}"
-            elif (t.type, t.subtype) == ("OPERAND", "RANGE"):
-                cell_range = CellRange(t.value)
-                if cell_range.is_single_cell():
-                    cell = self.get_sheet(cell_range.get_parent_sheet_name())[
-                        cell_range.get_start_pos()
-                    ]
-                    op += str(self.evaluate(cell))
-                else:
-                    cell_range_vals = self.evaluate_range(cell_range)
-                    # assume SUM
-                    s = 0
-                    for v in cell_range_vals:
-                        s += v
-                    op += str(s)
-
-        if len(op) > 0:
-            return eval(op)
-        else:
+        if cell_val is None:
             return 0
+        if isinstance(cell_val, (int, float)):
+            return cell_val
+        if not isinstance(cell_val, str) or not cell_val.startswith("="):
+            if isinstance(cell_val, str):
+                try:
+                    return self.from_str(cell_val)
+                except ValueError:
+                    return 0
+            return 0
+        tokens = Tokenizer(cell_val)
+        postfix = self._infix_to_postfix(tokens.items)
+        return self._evaluate_postfix(postfix)
