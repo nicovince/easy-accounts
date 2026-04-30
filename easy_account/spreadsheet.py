@@ -82,6 +82,7 @@ class Spreadsheet:
         output = []
         operators = []
         i = 0
+        func_arg_counts = []
         while i < len(tokens):
             t = tokens[i]
             if (t.type, t.subtype) == ("OPERAND", "NUMBER"):
@@ -91,6 +92,10 @@ class Spreadsheet:
                 output.append(("range", cell_range))
             elif t.type == "FUNC" and t.subtype == "OPEN":
                 operators.append(("func", t.value.upper()))
+                func_arg_counts.append(1)
+            elif t.type == "SEP":
+                if func_arg_counts:
+                    func_arg_counts[-1] += 1
             elif t.type == "OPERATOR-INFIX":
                 while (
                     operators
@@ -102,12 +107,19 @@ class Spreadsheet:
                 operators.append(("op", t.value))
             elif t.type == "PAREN" and t.value == "(":
                 operators.append(("paren", "("))
+            elif t.type == "FUNC" and t.subtype == "CLOSE":
+                if operators and operators[-1][0] == "func":
+                    func_token = operators.pop()
+                    arg_count = func_arg_counts.pop() if func_arg_counts else 1
+                    output.append(("func", func_token[1], arg_count))
             elif t.type == "PAREN" and t.value == ")":
                 while operators and operators[-1] != ("paren", "("):
                     output.append(operators.pop())
                 operators.pop()
                 if operators and operators[-1][0] == "func":
-                    output.append(operators.pop())
+                    func_token = operators.pop()
+                    arg_count = func_arg_counts.pop() if func_arg_counts else 1
+                    output.append(("func", func_token[1], arg_count))
             i += 1
         while operators:
             output.append(operators.pop())
@@ -129,12 +141,15 @@ class Spreadsheet:
                     vals = self.evaluate_range(cell_range)
                     stack.append(sum(vals))
             elif item[0] == "func":
-                args = stack.pop()
+                arg_count = item[2] if len(item) > 2 else 1
+                args = []
+                for _ in range(arg_count):
+                    args.append(stack.pop())
+                args.reverse()
                 if item[1] == "SUM(":
-                    if isinstance(args, list):
-                        stack.append(sum(args))
-                    else:
-                        stack.append(args)
+                    stack.append(sum(args))
+                elif item[1] == "MAX(":
+                    stack.append(max(args))
             elif item[0] == "op":
                 b = stack.pop()
                 a = stack.pop()

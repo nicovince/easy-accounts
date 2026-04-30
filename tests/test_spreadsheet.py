@@ -181,3 +181,13 @@ class TestSpreadsheetEvaluate:
         ws["A5"] = "=SUM(A1:A4)"
         val = sample_spreadsheet.evaluate(ws["A5"])
         assert val == 10
+
+    def test_spreadsheet_evaluate_sum_multiple_args(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "1"
+        ws["A2"] = "2"
+        ws["A3"] = "3"
+        ws["A4"] = "4"
+        ws["A5"] = "=SUM(A1,A2,A3,A4)"
+        val = sample_spreadsheet.evaluate(ws["A5"])
+        assert val == 10
