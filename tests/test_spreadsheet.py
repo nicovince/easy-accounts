@@ -204,3 +204,35 @@ class TestSpreadsheetEvaluate:
         ws["A6"] = "=SUM(A1,A2,A3+A4)"
         val = sample_spreadsheet.evaluate(ws["A6"])
         assert val == 10
+
+    def test_spreadsheet_evaluate_max_formula(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "1"
+        ws["A2"] = "2"
+        ws["A3"] = "=MAX(A1,A2)"
+        val = sample_spreadsheet.evaluate(ws["A3"])
+        assert val == 2
+
+    def test_spreadsheet_evaluate_max_formula_with_formula_arg(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "1"
+        ws["A2"] = "2"
+        ws["A3"] = "=MAX(A1+4,A2)"
+        val = sample_spreadsheet.evaluate(ws["A3"])
+        assert val == 5
+
+    def test_spreadsheet_evaluate_max_formula_with_formula_arg_and_add(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "1"
+        ws["A2"] = "2"
+        ws["A3"] = "=MAX(A1+4,0) + 5"
+        val = sample_spreadsheet.evaluate(ws["A3"])
+        assert val == 10
+
+    def test_spreadsheet_evaluate_max_formula_with_negative_value(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "1"
+        ws["A2"] = "2"
+        ws["A3"] = "=MAX(A1 - A2, 0) + B1"
+        val = sample_spreadsheet.evaluate(ws["A3"])
+        assert val == 0
