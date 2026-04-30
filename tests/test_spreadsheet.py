@@ -146,3 +146,38 @@ class TestSpreadsheetEvaluate:
         ws["A4"] = "=SUM(A1:A3)"
         val = sample_spreadsheet.evaluate(ws["A4"])
         assert val == 4
+
+    def test_spreadsheet_evaluate_simple_formula(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "=3+4"
+        val = sample_spreadsheet.evaluate(ws["A1"])
+        assert val == 7
+
+    def test_spreadsheet_evaluate_priority(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "=1+3*5"
+        val = sample_spreadsheet.evaluate(ws["A1"])
+        assert val == 16
+
+    def test_spreadsheet_evaluate_parenthesis(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "=(1+3)*5"
+        val = sample_spreadsheet.evaluate(ws["A1"])
+        assert val == 20
+
+    def test_spreadsheet_evaluate_cell_ref_in_formula(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "5"
+        ws["A2"] = "=A1+2"
+        val = sample_spreadsheet.evaluate(ws["A2"])
+        assert val == 7
+
+    def test_spreadsheet_evaluate_sum_function(self, sample_spreadsheet):
+        ws = sample_spreadsheet.get_sheet("Sheet1")
+        ws["A1"] = "1"
+        ws["A2"] = "2"
+        ws["A3"] = "3"
+        ws["A4"] = "4"
+        ws["A5"] = "=SUM(A1:A4)"
+        val = sample_spreadsheet.evaluate(ws["A5"])
+        assert val == 10
