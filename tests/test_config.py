@@ -283,7 +283,7 @@ report = "janvier,groceries"
     config = load_config(config_path)
     report = get_report(config)
 
-    assert report == "janvier,groceries"
+    assert report == ["janvier,groceries"]
 
 
 def test_get_report_not_defined(tmp_path):
@@ -328,7 +328,7 @@ report = ",groceries"
     config = load_config(config_path)
     report = get_report(config, current_month="janvier")
 
-    assert report == "janvier,groceries"
+    assert report == ["janvier,groceries"]
 
 
 def test_get_report_with_empty_month_and_current_month(tmp_path):
@@ -349,7 +349,7 @@ report = ",groceries"
     config = load_config(config_path)
     report = get_report(config, current_month="janvier")
 
-    assert report == "janvier,groceries"
+    assert report == ["janvier,groceries"]
 
 
 def test_get_report_with_empty_month_user_and_current_month(tmp_path):
@@ -370,7 +370,70 @@ report = ",groceries,alice"
     config = load_config(config_path)
     report = get_report(config, current_month="janvier")
 
-    assert report == "janvier,groceries,alice"
+    assert report == ["janvier,groceries,alice"]
+
+
+def test_get_report_multiple_values(tmp_path):
+    """Test getting multiple default reports from valid config."""
+    config_path = tmp_path / ".easy-account.toml"
+    config_content = """
+[months]
+months = ["janvier", "fevrier"]
+
+[categories]
+categories = ["groceries", "utilities"]
+
+[report]
+report = ["janvier,groceries", "fevrier,utilities"]
+"""
+    config_path.write_text(config_content)
+
+    config = load_config(config_path)
+    reports = get_report(config)
+
+    assert reports == ["janvier,groceries", "fevrier,utilities"]
+
+
+def test_get_report_multiple_values_with_current_month(tmp_path):
+    """Test getting multiple reports with empty month using current_month."""
+    config_path = tmp_path / ".easy-account.toml"
+    config_content = """
+[months]
+months = ["janvier", "fevrier"]
+
+[categories]
+categories = ["groceries", "utilities"]
+
+[report]
+report = [",groceries", ",utilities"]
+"""
+    config_path.write_text(config_content)
+
+    config = load_config(config_path)
+    reports = get_report(config, current_month="janvier")
+
+    assert reports == ["janvier,groceries", "janvier,utilities"]
+
+
+def test_get_report_mixed_single_and_list(tmp_path):
+    """Test that single string report still works (backward compatibility)."""
+    config_path = tmp_path / ".easy-account.toml"
+    config_content = """
+[months]
+months = ["janvier"]
+
+[categories]
+categories = ["groceries"]
+
+[report]
+report = "janvier,groceries"
+"""
+    config_path.write_text(config_content)
+
+    config = load_config(config_path)
+    reports = get_report(config)
+
+    assert reports == ["janvier,groceries"]
 
 
 def test_get_report_without_current_month_returns_empty_month(tmp_path):
@@ -391,7 +454,7 @@ report = ",groceries"
     config = load_config(config_path)
     report = get_report(config, current_month=None)
 
-    assert report == ",groceries"
+    assert report == [",groceries"]
 
 
 class TestIsMultiuserSpreadsheet:

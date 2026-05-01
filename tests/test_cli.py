@@ -2,6 +2,7 @@
 
 import os
 import sys
+import re
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -17,6 +18,14 @@ def tmp_path_cwd(tmp_path):
     os.chdir(tmp_path)
     yield tmp_path
     os.chdir(original_cwd)
+
+
+class TestCli:
+    @staticmethod
+    def assert_show(stdout, value):
+        """Assert that value is shown in stdout"""
+        expect = rf"Show content of <.*>: {value}"
+        assert re.search(expect, stdout), f"Expected '{value}' to be shown in output:\n{stdout}"
 
 
 class TestCliUserValidation:
@@ -549,7 +558,7 @@ report = ",bar"
         assert "1334" in captured.out
 
 
-class TestCliShowCmd:
+class TestCliShowCmd(TestCli):
     """Tests for CLI show command."""
 
     def test_show_mono_account(self, spreadsheet_unmodified, capsys, monkeypatch):
@@ -592,3 +601,102 @@ class TestCliShowCmd:
         easy_account.cli.main()
         captured = capsys.readouterr()
         assert "4321" in captured.out
+
+    def test_cli_multiple_reports_from_cli(self, spreadsheet, capsys, monkeypatch):
+        """Test that multiple --report values work from CLI."""
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "insert",
+                str(spreadsheet),
+                "mono user",
+                "janvier",
+                "bar",
+                "100",
+                "--report",
+                "janvier,foo",
+                "janvier,bar",
+            ],
+        )
+
+        easy_account.cli.main()
+        captured = capsys.readouterr()
+        # foo has value 0, bar has value 1334 in test spreadsheet
+        self.assert_show(captured.out, 0)
+        self.assert_show(captured.out, 1334)
+
+    def test_cli_multiple_reports_from_config(self, spreadsheet, capsys, monkeypatch, tmp_path_cwd):
+        """Test that multiple report values from config are used."""
+        config_path = tmp_path_cwd / ".easy-account.toml"
+        config_content = """
+[months]
+months = ["janvier", "fevrier", "mars"]
+
+[categories]
+categories = ["foo", "bar"]
+
+[report]
+report = ["janvier,foo", "janvier,bar"]
+"""
+        config_path.write_text(config_content)
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "insert",
+                str(spreadsheet),
+                "mono user",
+                "janvier",
+                "bar",
+                "100",
+            ],
+        )
+
+        easy_account.cli.main()
+        captured = capsys.readouterr()
+        # foo has value 0, bar has value 1334 in test spreadsheet
+        self.assert_show(captured.out, 0)
+        self.assert_show(captured.out, 1334)
+
+    def test_cli_report_overrides_config_multiple(
+        self, spreadsheet, capsys, monkeypatch, tmp_path_cwd
+    ):
+        """Test that explicit --report overrides config with multiple values."""
+        config_path = tmp_path_cwd / ".easy-account.toml"
+        config_content = """
+[months]
+months = ["janvier", "fevrier", "mars"]
+
+[categories]
+categories = ["foo", "bar"]
+
+[report]
+report = ["janvier,foo", "fevrier,bar"]
+"""
+        config_path.write_text(config_content)
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "insert",
+                str(spreadsheet),
+                "mono user",
+                "janvier",
+                "bar",
+                "100",
+                "--report",
+                "janvier,bar",
+            ],
+        )
+
+        easy_account.cli.main()
+        captured = capsys.readouterr()
+        self.assert_show(captured.out, 1334)
+        # Should only report one value, not the config's two values
+        assert captured.out.count("Show content of") == 1
