@@ -283,9 +283,11 @@ def cmd_insert(args):
         cell, val = account_get_cell_value(account, args.month, args.category, args.user)
         print(f"Show content of {cell}: {val}")
     if args.report is not None:
-        (month, category, user) = parse_report_opt(args.report, args.month)
-        cell, val = account_get_cell_value(account, month, category, user)
-        print(f"Show content of {cell}: {val}")
+        # args.report is now a list of report strings
+        for report in args.report:
+            (month, category, user) = parse_report_opt(report, args.month)
+            cell, val = account_get_cell_value(account, month, category, user)
+            print(f"Show content of {cell}: {val}")
 
 
 def main():
@@ -391,9 +393,10 @@ Autocompletion:
     parser_insert.add_argument(
         "--report",
         type=str,
+        nargs="+",
         default=None,
-        help="A cell for which the updated value must be reported. "
-        "Format 'col-name,row-name[,user-name]'",
+        help="Cell(s) for which the updated value must be reported. "
+        "Format 'col-name,row-name[,user-name]'. Can be specified multiple times.",
     )
 
     parser_insert.add_argument(

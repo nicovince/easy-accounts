@@ -121,15 +121,16 @@ def get_categories(config: dict | None = None) -> list[str]:
         raise ConfigError(f"Failed to read categories from config: {e}")
 
 
-def get_report(config: dict | None = None, current_month: str = None) -> str | None:
-    """Get default report cell from config.
+def get_report(config: dict | None = None, current_month: str = None) -> list[str] | None:
+    """Get default report cells from config.
 
     Args:
         config: Configuration dictionary. If None, loads from file.
         current_month: The current month being edited (used if month is omitted in report).
 
     Returns:
-        Default report cell string (format: 'month,category[,user]') or None if not defined.
+        List of default report cell strings (format: 'month,category[,user]')
+        or None if not defined.
     """
     if config is None:
         try:
@@ -138,25 +139,48 @@ def get_report(config: dict | None = None, current_month: str = None) -> str | N
             return None
 
     try:
-        report = config.get("report")
-        if isinstance(report, dict):
-            report = report.get("report")
+        report_raw = config.get("report")
+        if isinstance(report_raw, dict):
+            report_raw = report_raw.get("report")
 
-        if not report:
+        if not report_raw:
             return None
 
-        parts = report.split(",")
-        if len(parts) == 1:
-            return f"{current_month},{parts[0]}"
-        elif len(parts) == 2:
-            if parts[0] == "" and current_month:
-                return f"{current_month},{parts[1]}"
-            return report
-        elif len(parts) == 3:
-            if parts[0] == "" and current_month:
-                return f"{current_month},{parts[1]},{parts[2]}"
-            return report
-        return report
+        # Normalize to list: handle single string or list of strings
+        if isinstance(report_raw, str):
+            report_list = [report_raw]
+        elif isinstance(report_raw, list):
+            report_list = [r for r in report_raw if isinstance(r, str)]
+        else:
+            return None
+
+        processed_reports = []
+        for report_str in report_list:
+            parts = report_str.split(",")
+            if len(parts) == 1:
+                # Only category provided
+                processed = f"{current_month},{report_str}" if current_month else report_str
+            elif len(parts) == 2:
+                month_part, cat_part = parts[0], parts[1]
+                if not month_part and current_month:
+                    processed = f"{current_month},{cat_part}"
+                else:
+                    processed = report_str
+            elif len(parts) == 3:
+                month_part, cat_part, user_part = parts[0], parts[1], parts[2]
+                if not month_part and current_month:
+                    processed = (
+                        f"{current_month},{cat_part},{user_part}"
+                        if user_part
+                        else f"{current_month},{cat_part}"
+                    )
+                else:
+                    processed = report_str
+            else:
+                processed = report_str
+            processed_reports.append(processed)
+
+        return processed_reports if processed_reports else None
     except Exception:
         return None
 
