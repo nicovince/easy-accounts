@@ -32,11 +32,11 @@ class TextInputs(VerticalGroup):
 class FetchedVals(VerticalGroup):
     def compose(self) -> ComposeResult:
         yield Static("Spent")
-        yield Static("5", id="spent_value")
+        yield Static("15", id="spent_value", classes="value")
         yield Static("Income")
-        yield Static("6", id="income_value")
+        yield Static("6", id="income_value", classes="value")
         yield Static("Balance")
-        yield Static("1", id="balance")
+        yield Static("1", id="balance", classes="value")
 
 
 class EasyAccountTUI(App):
