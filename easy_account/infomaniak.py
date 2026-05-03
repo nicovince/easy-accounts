@@ -1,8 +1,10 @@
 """Infomaniak API client for kdrive operations."""
 
 import os
+import sys
 from dataclasses import dataclass
 from typing import Any
+from pathlib import Path
 
 import requests
 
@@ -15,6 +17,18 @@ class InfomaniakApiError(Exception):
 
 class MissingTokenError(Exception):
     """Raised when IK_TOKEN environment variable is not set."""
+
+    pass
+
+
+class InfomaniakInvalidApiUrl(Exception):
+    """Raised when the API url could not be parsed."""
+
+    pass
+
+
+class InfomaniakFileAlreadyExists(Exception):
+    """Raised when file already exists."""
 
     pass
 
@@ -192,3 +206,27 @@ class InfomaniakApi:
             raise InfomaniakApiError(
                 f"Upload failed with status {response.status_code}: {response.text}"
             )
+
+
+def pull_file(url: str) -> str:
+    parsed = url.rstrip("/").split("/")
+    try:
+        drive_id = int(parsed[-3])
+        file_id = int(parsed[-1])
+    except (IndexError, ValueError):
+        print(
+            "Error: Invalid API URL format. Expected "
+            "https://api.infomaniak.com/2/drive/<drive_id>/files/<file_id>",
+            file=sys.stderr,
+        )
+        raise InfomaniakInvalidApiUrl(f"Invalid Infomaniak API URL: {url}")
+
+    api = InfomaniakApi()
+    file_info = api.get_file_info(drive_id, file_id)
+    destination = Path(file_info.name)
+
+    if destination.exists():
+        raise InfomaniakFileAlreadyExists(f"File {destination} already exists")
+
+    api.download_file(drive_id, file_id, str(destination))
+    return str(destination)

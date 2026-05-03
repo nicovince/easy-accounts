@@ -205,6 +205,109 @@ class TestCliInsertCmd:
         assert "1234" in captured.out
 
 
+class TestCliPullCmd:
+    """Tests for CLI pull command."""
+
+    def test_pull_no_api_url_error(self, tmp_path_cwd, capsys, monkeypatch):
+        """Test that pull without API URL returns error."""
+        monkeypatch.setenv("IK_TOKEN", "test_token")
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["easy-account", "pull"],
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            easy_account.cli.main()
+
+        assert exc_info.value.code == 1
+        captured = capsys.readouterr()
+        assert "No API URL provided" in captured.err
+
+    def test_pull_invalid_api_url_error(self, tmp_path_cwd, capsys, monkeypatch):
+        """Test that pull with invalid API URL returns error."""
+        monkeypatch.setenv("IK_TOKEN", "test_token")
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["easy-account", "pull", "invalid_url"],
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            easy_account.cli.main()
+
+        assert exc_info.value.code == 1
+        captured = capsys.readouterr()
+        assert "Invalid API URL format" in captured.err
+
+    def test_pull_file_already_exists(self, tmp_path_cwd, capsys, monkeypatch):
+        """Test successful pull command."""
+        monkeypatch.setenv("IK_TOKEN", "test_token")
+        test_file = tmp_path_cwd / "test.xlsx"
+        test_file.write_bytes(b"test content")
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "pull",
+                "https://api.infomaniak.com/2/drive/1475057/files/9",
+            ],
+        )
+
+        mock_file_info = MagicMock()
+        mock_file_info.name = str(test_file)
+
+        with patch("easy_account.infomaniak.InfomaniakApi") as MockApi:
+            mock_api = MagicMock()
+            mock_api.get_file_info.return_value = mock_file_info
+            MockApi.return_value = mock_api
+
+            with pytest.raises(SystemExit) as exc_info:
+                easy_account.cli.main()
+            assert exc_info.value.code == 1
+
+            mock_api.get_file_info.assert_called_once_with(1475057, 9)
+
+        captured = capsys.readouterr()
+        assert f"Error: File {test_file} already exists" in captured.err
+
+    def test_pull_success(self, tmp_path_cwd, capsys, monkeypatch):
+        """Test successful pull command."""
+        monkeypatch.setenv("IK_TOKEN", "test_token")
+        test_file = tmp_path_cwd / "test.xlsx"
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account",
+                "pull",
+                "https://api.infomaniak.com/2/drive/1475057/files/9",
+            ],
+        )
+
+        mock_file_info = MagicMock()
+        mock_file_info.name = str(test_file)
+
+        with patch("easy_account.infomaniak.InfomaniakApi") as MockApi:
+            mock_api = MagicMock()
+            mock_api.get_file_info.return_value = mock_file_info
+            mock_api.download_file.return_value = None
+            MockApi.return_value = mock_api
+
+            with pytest.raises(SystemExit) as exc_info:
+                easy_account.cli.main()
+            assert exc_info.value.code == 0
+
+            mock_api.get_file_info.assert_called_once_with(1475057, 9)
+            mock_api.download_file.assert_called_once()
+
+        captured = capsys.readouterr()
+        assert f"Downloaded: {test_file}" in captured.out
+
+
 class TestCliPushCmd:
     """Tests for CLI push command."""
 
