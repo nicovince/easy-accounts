@@ -2,6 +2,7 @@ from textual.app import App, ComposeResult
 from textual.containers import VerticalGroup
 from textual.widgets import Button, Footer, Header, Input, Static, Select
 from textual.screen import Screen
+from textual.widget import Widget
 import easy_account.config as ea_config
 import importlib.metadata
 import argparse
@@ -16,12 +17,37 @@ class Buttons(VerticalGroup):
         yield Button("Push", id="push", classes="box")
 
 
+class CellSelector(Widget):
+    DEFAULT_CSS = """
+    CellSelector {
+        height: auto;
+        width: auto;
+        layout: vertical;
+    }
+    """
+
+    def __init__(self, prompt: str, identifier: str):
+        self.prompt = prompt
+        self.identifier = identifier
+        super().__init__()
+
+    def compose(self) -> ComposeResult:
+        yield Select(
+            options=[],
+            allow_blank=True,
+            prompt=self.prompt,
+            id=self.identifier,
+            disabled=True,
+            classes="box",
+        )
+
+
 class SelectionsCell(VerticalGroup):
     def compose(self) -> ComposeResult:
-        yield Select(options=[], allow_blank=True, prompt="Sheet", disabled=True, id="sheet")
-        yield Button("Month\n(-)", id="month")
-        yield Button("Category\n(-)", id="category")
-        yield Button("User\n(-)", id="user")
+        yield CellSelector("Sheet", "sheet")
+        yield CellSelector("Month", "month")
+        yield CellSelector("Category", "category")
+        yield CellSelector("User", "user")
 
 
 class TextInputs(VerticalGroup):
