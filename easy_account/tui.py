@@ -4,6 +4,8 @@ from textual.widgets import Button, Footer, Header, Input, Static
 import easy_account.config as ea_config
 import importlib.metadata
 import argparse
+import easy_account.infomaniak
+from easy_account.infomaniak import InfomaniakApi
 
 
 class Buttons(VerticalGroup):
@@ -74,6 +76,10 @@ class EasyAccountTUI(App):
 
     def __init__(self) -> None:
         self.args = self.parse_args()
+        try:
+            self.api = InfomaniakApi()
+        except easy_account.infomaniak.MissingTokenError:
+            self.api = InfomaniakApi("DUMMY_TOKEN")
         super().__init__()
 
     def compose(self) -> ComposeResult:
@@ -96,8 +102,17 @@ class EasyAccountTUI(App):
             display.update("555")
             # You can also change styles dynamically
             display.styles.color = "green"
+        elif event.button.id == "pull":
+            config = easy_account.config.load_config(self.args.config)
+            api_url = easy_account.config.get_kdrive_api_url(config)
+            assert api_url is not None
+            easy_account.infomaniak.pull_file(api_url)
+
+
+def main():
+    app = EasyAccountTUI()
+    app.run()
 
 
 if __name__ == "__main__":
-    app = EasyAccountTUI()
-    app.run()
+    main()

@@ -34,6 +34,7 @@ test = ["pytest", "ipython", "ruff", "pytest-asyncio", "pytest-textual-snapshot"
 
 [project.scripts]
 easy-account = "easy_account.cli:main"
+easy-account-tui = "easy_account.tui:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
