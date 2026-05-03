@@ -17,6 +17,7 @@ dependencies = [
     "argcomplete",
     "requests",
     'tomli >= 1.1.0 ; python_version < "3.11"',
+    "textual",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -29,7 +30,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest", "ipython", "ruff"]
+test = ["pytest", "ipython", "ruff", "pytest-textual-snapshot"]
 
 [project.scripts]
 easy-account = "easy_account.cli:main"

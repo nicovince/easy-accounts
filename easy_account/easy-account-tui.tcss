@@ -1,0 +1,26 @@
+Screen {
+    layout: grid;
+    grid-size: 2 3;
+    grid-columns: auto 1fr;
+    grid-rows: auto 1fr 1fr;
+    grid-gutter: 1;
+}
+
+#fetched-vals {
+    layout: grid;
+    grid-size: 2 3;
+}
+
+#user-inputs {
+    row-span: 2;
+}
+
+#buttons {
+    column-span: 2;
+    layout: grid;
+    grid-size: 3 1;
+}
+
+.box {
+    border: solid green;
+}
