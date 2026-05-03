@@ -1,6 +1,6 @@
 from textual.app import App, ComposeResult
 from textual.containers import VerticalGroup
-from textual.widgets import Button, Footer, Header, Input, Static
+from textual.widgets import Button, Footer, Header, Input, Static, Select
 from textual.screen import Screen
 import easy_account.config as ea_config
 import importlib.metadata
@@ -18,7 +18,7 @@ class Buttons(VerticalGroup):
 
 class SelectionsCell(VerticalGroup):
     def compose(self) -> ComposeResult:
-        yield Button("Sheet\n(-)", id="sheet")
+        yield Select(options=[], allow_blank=True, prompt="Sheet", disabled=True, id="sheet")
         yield Button("Month\n(-)", id="month")
         yield Button("Category\n(-)", id="category")
         yield Button("User\n(-)", id="user")
@@ -64,6 +64,8 @@ class MainScreen(Screen):
             api_url = easy_account.config.get_kdrive_api_url(config)
             assert api_url is not None
             self.app.args.spreadsheet = easy_account.infomaniak.pull_file(api_url)
+            sheet_sel = self.query_one("#sheet", Select)
+            sheet_sel.disabled = False
 
 
 class EasyAccountTUI(App):

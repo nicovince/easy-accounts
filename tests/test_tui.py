@@ -37,11 +37,16 @@ api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
         app = EasyAccountTUI()
     async with app.run_test() as pilot:
         with patch("easy_account.infomaniak.InfomaniakApi") as InfomaniakApiMock:
+            sheet_sel = app.screen.query_one("#sheet")
+            assert sheet_sel.disabled, "#sheet Select must be disabled"
+
             ik_api_mock = MagicMock()
             ik_api_mock.get_file_info.return_value = mock_file_info
             ik_api_mock.download_file.return_value = None
             InfomaniakApiMock.return_value = ik_api_mock
+
             await pilot.click("#pull")
             ik_api_mock.get_file_info.assert_called_once_with(3615, 1234)
             ik_api_mock.download_file.assert_called_once()
             assert app.args.spreadsheet == mock_file_info.name
+            assert not sheet_sel.disabled, "#sheet Select must be disabled"
