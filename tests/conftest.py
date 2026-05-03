@@ -66,6 +66,15 @@ def fill_multiuser_sheet(ws):
     ws["C4"] = "=4321"
 
 
+@pytest.fixture
+def tmp_path_cwd(tmp_path):
+    """Set current working directory to tmp_path and restore on teardown"""
+    original_cwd = os.getcwd()
+    os.chdir(tmp_path)
+    yield tmp_path
+    os.chdir(original_cwd)
+
+
 @pytest.fixture(scope="session")
 def spreadsheet_template(tmp_path_factory):
     """Create a spreadsheet with both mono-user and multi-user sheets."""

@@ -1,6 +1,5 @@
 """Tests for CLI module."""
 
-import os
 import sys
 import re
 from unittest.mock import MagicMock, patch
@@ -9,15 +8,6 @@ import pytest
 
 from easy_account.config import create_example_config
 import easy_account.cli
-
-
-@pytest.fixture
-def tmp_path_cwd(tmp_path):
-    """Set current working directory to tmp_path and restore on teardown"""
-    original_cwd = os.getcwd()
-    os.chdir(tmp_path)
-    yield tmp_path
-    os.chdir(original_cwd)
 
 
 class TestCli:
