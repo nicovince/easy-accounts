@@ -1,6 +1,7 @@
 from textual.app import App, ComposeResult
 from textual.containers import VerticalGroup
 from textual.widgets import Button, Footer, Header, Input, Static
+from textual.screen import Screen
 import easy_account.config as ea_config
 import importlib.metadata
 import argparse
@@ -39,11 +40,40 @@ class FetchedVals(VerticalGroup):
         yield Static("1", id="balance", classes="value")
 
 
+class MainScreen(Screen):
+    """Main Screen for EasyAccount Text User Interface."""
+
+    def compose(self) -> ComposeResult:
+        """Create child widgets for the app."""
+        yield Header()
+        yield Buttons(id="buttons", classes="box")
+        yield SelectionsCell(id="sidebar", classes="box")
+        yield TextInputs(id="user-inputs", classes="box")
+        yield FetchedVals(id="fetched-vals", classes="box")
+        yield Footer(show_command_palette=True)
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "sheet":
+            # Find the widget by ID and update its content
+            display = self.query_one("#spent_value", Static)
+            display.update("555")
+            # You can also change styles dynamically
+            display.styles.color = "green"
+        elif event.button.id == "pull":
+            config = easy_account.config.load_config(self.app.args.config)
+            api_url = easy_account.config.get_kdrive_api_url(config)
+            assert api_url is not None
+            easy_account.infomaniak.pull_file(api_url)
+
+
 class EasyAccountTUI(App):
     """A Textual app to manage EasyAccount."""
 
     CSS_PATH = "easy-account-tui.tcss"
     SUB_TITLE = importlib.metadata.version("easy-account")
+    MODES = {
+        "main": MainScreen,
+    }
 
     @staticmethod
     def parse_args():
@@ -82,31 +112,8 @@ class EasyAccountTUI(App):
             self.api = InfomaniakApi("DUMMY_TOKEN")
         super().__init__()
 
-    def compose(self) -> ComposeResult:
-        """Create child widgets for the app."""
-        yield Header()
-        yield Footer()
-        yield Buttons(id="buttons", classes="box")
-        yield SelectionsCell(id="sidebar", classes="box")
-        yield TextInputs(id="user-inputs", classes="box")
-        yield FetchedVals(id="fetched-vals", classes="box")
-
-    def action_toggle_dark(self) -> None:
-        """An action to toggle dark mode."""
-        self.theme = "textual-dark" if self.theme == "textual-light" else "textual-light"
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "sheet":
-            # Find the widget by ID and update its content
-            display = self.query_one("#spent_value", Static)
-            display.update("555")
-            # You can also change styles dynamically
-            display.styles.color = "green"
-        elif event.button.id == "pull":
-            config = easy_account.config.load_config(self.args.config)
-            api_url = easy_account.config.get_kdrive_api_url(config)
-            assert api_url is not None
-            easy_account.infomaniak.pull_file(api_url)
+    def on_mount(self) -> None:
+        self.switch_mode("main")
 
 
 def main():
