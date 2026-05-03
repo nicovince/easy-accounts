@@ -63,7 +63,7 @@ class MainScreen(Screen):
             config = easy_account.config.load_config(self.app.args.config)
             api_url = easy_account.config.get_kdrive_api_url(config)
             assert api_url is not None
-            easy_account.infomaniak.pull_file(api_url)
+            self.app.args.spreadsheet = easy_account.infomaniak.pull_file(api_url)
 
 
 class EasyAccountTUI(App):

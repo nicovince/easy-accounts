@@ -44,3 +44,4 @@ api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
             await pilot.click("#pull")
             ik_api_mock.get_file_info.assert_called_once_with(3615, 1234)
             ik_api_mock.download_file.assert_called_once()
+            assert app.args.spreadsheet == mock_file_info.name
