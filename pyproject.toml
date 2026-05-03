@@ -30,7 +30,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest", "ipython", "ruff", "pytest-textual-snapshot"]
+test = ["pytest", "ipython", "ruff", "pytest-asyncio", "pytest-textual-snapshot"]
 
 [project.scripts]
 easy-account = "easy_account.cli:main"
@@ -41,3 +41,4 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v"
+asyncio_mode = "auto"
