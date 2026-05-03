@@ -17,3 +17,4 @@ async def test_tui_cli_opt(mock_args):
     async with app.run_test():
         assert app.args.spreadsheet is None
         assert app.args.config == ".easy-account.toml"
+        assert app.SUB_TITLE == "0.2.0"

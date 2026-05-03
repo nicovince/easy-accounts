@@ -41,6 +41,7 @@ class EasyAccountTUI(App):
     """A Textual app to manage EasyAccount."""
 
     CSS_PATH = "easy-account-tui.tcss"
+    SUB_TITLE = importlib.metadata.version("easy-account")
 
     @staticmethod
     def parse_args():
