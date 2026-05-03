@@ -75,15 +75,20 @@ def tmp_path_cwd(tmp_path):
     os.chdir(original_cwd)
 
 
-@pytest.fixture(scope="session")
-def spreadsheet_template(tmp_path_factory):
+def create_spreadsheet_template(filename: str) -> None:
     """Create a spreadsheet with both mono-user and multi-user sheets."""
     wb = Workbook()
     wb.remove(wb.active)
     fill_monouser_sheet(wb.create_sheet("mono user"))
     fill_multiuser_sheet(wb.create_sheet("multi users"))
+    wb.save(filename)
+
+
+@pytest.fixture(scope="session")
+def spreadsheet_template(tmp_path_factory):
+    """Fixture to create spreadsheet template."""
     path = tmp_path_factory.mktemp("template") / "template_spreadsheet.xlsx"
-    wb.save(path)
+    create_spreadsheet_template(path)
     return str(path)
 
 
