@@ -97,10 +97,10 @@ class MainScreen(Screen):
             sheets_opts = [(s, s) for s in self.app.account.wb.sheetnames]
             sheet_sel.set_options(sheets_opts)
 
-            month_sel = self.query_one("#month", Select)
-            month_sel.disabled = False
-            months_opts = [(m, m) for m in self.app.account.get_spreadsheet_months()]
-            month_sel.set_options(months_opts)
+            # month_sel = self.query_one("#month", Select)
+            # month_sel.disabled = False
+            # months_opts = [(m, m) for m in self.app.account.get_spreadsheet_months()]
+            # month_sel.set_options(months_opts)
 
 
 class EasyAccountTUI(App):
