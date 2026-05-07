@@ -8,6 +8,7 @@ import importlib.metadata
 import argparse
 import easy_account.infomaniak
 from easy_account.infomaniak import InfomaniakApi
+from easy_account.account import AccountSpreadsheet
 
 
 class Buttons(VerticalGroup):
@@ -90,8 +91,16 @@ class MainScreen(Screen):
             api_url = easy_account.config.get_kdrive_api_url(config)
             assert api_url is not None
             self.app.args.spreadsheet = easy_account.infomaniak.pull_file(api_url)
+            self.app.account = AccountSpreadsheet(self.app.args.spreadsheet)
             sheet_sel = self.query_one("#sheet", Select)
             sheet_sel.disabled = False
+            sheets_opts = [(s, s) for s in self.app.account.wb.sheetnames]
+            sheet_sel.set_options(sheets_opts)
+
+            month_sel = self.query_one("#month", Select)
+            month_sel.disabled = False
+            months_opts = [(m, m) for m in self.app.account.get_spreadsheet_months()]
+            month_sel.set_options(months_opts)
 
 
 class EasyAccountTUI(App):
