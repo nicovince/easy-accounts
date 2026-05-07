@@ -56,6 +56,25 @@ async def test_tui_default_select_menu_state(mock_args):
         assert_select_menu(app, "user", True)
 
 
+async def test_tui_opt_spreadsheet(monkeypatch, tmp_path_cwd, spreadsheet_unmodified):
+    """Test the option to specify the spreadsheet on the command line.
+
+    Check the sheet selection menu is enabled"""
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "easy-account-tui",
+            "-f",
+            spreadsheet_unmodified,
+        ],
+    )
+    app = EasyAccountTUI()
+    async with app.run_test():
+        assert app.args.spreadsheet == spreadsheet_unmodified
+        assert_select_menu(app, "sheet", False)
+
+
 async def test_tui_pull(monkeypatch, tmp_path_cwd):
     """Test the pull button.
 

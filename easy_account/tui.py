@@ -79,6 +79,16 @@ class MainScreen(Screen):
         yield FetchedVals(id="fetched-vals", classes="box")
         yield Footer(show_command_palette=True)
 
+    def update_sheet_selection(self) -> None:
+        if self.app.account is not None:
+            sheet_sel = self.query_one("#sheet", Select)
+            sheet_sel.disabled = False
+            sheets_opts = [(s, s) for s in self.app.account.wb.sheetnames]
+            sheet_sel.set_options(sheets_opts)
+
+    def on_mount(self) -> None:
+        self.update_sheet_selection()
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "sheet":
             # Find the widget by ID and update its content
@@ -92,10 +102,7 @@ class MainScreen(Screen):
             assert api_url is not None
             self.app.args.spreadsheet = easy_account.infomaniak.pull_file(api_url)
             self.app.account = AccountSpreadsheet(self.app.args.spreadsheet)
-            sheet_sel = self.query_one("#sheet", Select)
-            sheet_sel.disabled = False
-            sheets_opts = [(s, s) for s in self.app.account.wb.sheetnames]
-            sheet_sel.set_options(sheets_opts)
+            self.update_sheet_selection()
 
             # month_sel = self.query_one("#month", Select)
             # month_sel.disabled = False
@@ -142,7 +149,11 @@ class EasyAccountTUI(App):
         return parser.parse_args()
 
     def __init__(self) -> None:
+        self.account = None
         self.args = self.parse_args()
+        if self.args.spreadsheet:
+            self.account = AccountSpreadsheet(self.args.spreadsheet)
+
         try:
             self.api = InfomaniakApi()
         except easy_account.infomaniak.MissingTokenError:
