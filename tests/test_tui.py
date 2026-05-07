@@ -4,6 +4,7 @@ import sys
 
 from unittest.mock import MagicMock, patch
 from easy_account.tui import EasyAccountTUI
+import conftest
 
 
 def test_tui_main_snap(snap_compare) -> None:
@@ -20,6 +21,10 @@ async def test_tui_cli_opt(mock_args):
         assert app.args.spreadsheet is None
         assert app.args.config == ".easy-account.toml"
         assert app.SUB_TITLE == "0.2.0"
+
+
+def mock_ik_download_file(drive_id: int, file_id: int, destination: str) -> None:
+    conftest.create_spreadsheet_template(destination)
 
 
 async def test_tui_pull(monkeypatch, tmp_path_cwd):
@@ -42,7 +47,7 @@ api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
 
             ik_api_mock = MagicMock()
             ik_api_mock.get_file_info.return_value = mock_file_info
-            ik_api_mock.download_file.return_value = None
+            ik_api_mock.download_file.side_effect = mock_ik_download_file
             InfomaniakApiMock.return_value = ik_api_mock
 
             await pilot.click("#pull")
