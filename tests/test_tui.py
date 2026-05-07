@@ -30,17 +30,28 @@ def mock_ik_download_file(drive_id: int, file_id: int, destination: str) -> None
     conftest.create_spreadsheet_template(destination)
 
 
-def assert_select_menu(app: textual.app.App, select_name: str, disabled: bool):
+def assert_select_menu(
+    app: textual.app.App,
+    select_name: str,
+    disabled: bool,
+    value: str | None = None,
+):
     """Verify that a select menu has the valid properties.
 
     app: the app to query
     select_name: the name of the select menu to query
     disabled: whether the select menu should be disabled or not
+    value: the expected value of the select menu, if not None
     """
     select = app.screen.query_one(f"#{select_name}")
     assert (
         select.disabled == disabled
     ), f"#{select_name} Select must be {'disabled' if disabled else 'enabled'}"
+    if not disabled:
+        if value is not None:
+            assert select.value == value
+        else:
+            select.is_blank()
 
 
 @mock.patch(
@@ -73,6 +84,10 @@ async def test_tui_opt_spreadsheet(monkeypatch, tmp_path_cwd, spreadsheet_unmodi
     async with app.run_test():
         assert app.args.spreadsheet == spreadsheet_unmodified
         assert_select_menu(app, "sheet", False)
+        print(app.screen.query_one("#sheet")._options)
+        assert_select_menu(app, "month", True)
+        assert_select_menu(app, "category", True)
+        assert_select_menu(app, "user", True)
 
 
 async def test_tui_pull(monkeypatch, tmp_path_cwd):
