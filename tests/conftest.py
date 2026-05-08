@@ -31,11 +31,19 @@ def get_months():
     return months
 
 
+def get_categories():
+    return ["foo", "bar"]
+
+
+def get_users():
+    return ["alice", "bob", "shared"]
+
+
 def fill_monouser_sheet(ws):
     months = get_months()
     col_month_offset = 2
     row_category_offset = 2
-    categories = ["foo", "bar"]
+    categories = get_categories()
     for idx, month in enumerate(months):
         ws.cell(row=1, column=(col_month_offset + idx), value=month)
 
@@ -46,8 +54,8 @@ def fill_monouser_sheet(ws):
 
 
 def fill_multiuser_sheet(ws):
-    users = ["alice", "bob", "shared"]
-    categories = ["foo", "bar"]
+    users = get_users()
+    categories = get_categories()
     col_month_offset = 2
     row_category_offset = 3
     months = get_months()
@@ -66,15 +74,29 @@ def fill_multiuser_sheet(ws):
     ws["C4"] = "=4321"
 
 
-@pytest.fixture(scope="session")
-def spreadsheet_template(tmp_path_factory):
+@pytest.fixture
+def tmp_path_cwd(tmp_path):
+    """Set current working directory to tmp_path and restore on teardown"""
+    original_cwd = os.getcwd()
+    os.chdir(tmp_path)
+    yield tmp_path
+    os.chdir(original_cwd)
+
+
+def create_spreadsheet_template(filename: str) -> None:
     """Create a spreadsheet with both mono-user and multi-user sheets."""
     wb = Workbook()
     wb.remove(wb.active)
     fill_monouser_sheet(wb.create_sheet("mono user"))
     fill_multiuser_sheet(wb.create_sheet("multi users"))
+    wb.save(filename)
+
+
+@pytest.fixture(scope="session")
+def spreadsheet_template(tmp_path_factory):
+    """Fixture to create spreadsheet template."""
     path = tmp_path_factory.mktemp("template") / "template_spreadsheet.xlsx"
-    wb.save(path)
+    create_spreadsheet_template(path)
     return str(path)
 
 

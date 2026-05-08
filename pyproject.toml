@@ -17,6 +17,7 @@ dependencies = [
     "argcomplete",
     "requests",
     'tomli >= 1.1.0 ; python_version < "3.11"',
+    "textual",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -29,10 +30,11 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest", "ipython", "ruff"]
+test = ["pytest", "ipython", "ruff", "pytest-asyncio", "pytest-textual-snapshot"]
 
 [project.scripts]
 easy-account = "easy_account.cli:main"
+easy-account-tui = "easy_account.tui:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -40,3 +42,4 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v"
+asyncio_mode = "auto"

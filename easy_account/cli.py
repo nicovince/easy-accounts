@@ -19,6 +19,7 @@ from easy_account.config import (
     validate_config_against_spreadsheet,
 )
 import easy_account.config as ea_config
+import easy_account.infomaniak as infomaniak
 from easy_account.infomaniak import InfomaniakApi, MissingTokenError
 
 try:
@@ -175,32 +176,22 @@ def cmd_pull(args):
         )
         sys.exit(1)
 
-    parsed = api_url.rstrip("/").split("/")
     try:
-        drive_id = int(parsed[-3])
-        file_id = int(parsed[-1])
-    except (IndexError, ValueError):
+        destination = infomaniak.pull_file(api_url)
+    except infomaniak.InfomaniakInvalidApiUrl:
         print(
             "Error: Invalid API URL format. Expected "
             "https://api.infomaniak.com/2/drive/<drive_id>/files/<file_id>",
             file=sys.stderr,
         )
         sys.exit(1)
-
-    try:
-        api = InfomaniakApi()
-    except MissingTokenError as e:
+    except infomaniak.MissingTokenError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except infomaniak.InfomaniakFileAlreadyExists as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
-    file_info = api.get_file_info(drive_id, file_id)
-    destination = Path(file_info.name)
-
-    if destination.exists():
-        print(f"Error: File already exists: {destination}", file=sys.stderr)
-        sys.exit(1)
-
-    api.download_file(drive_id, file_id, str(destination))
     print(f"Downloaded: {destination}")
 
 
