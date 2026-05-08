@@ -45,7 +45,25 @@ def fill_monouser_sheet(ws):
     row_category_offset = 2
     categories = get_categories()
     for idx, month in enumerate(months):
-        ws.cell(row=1, column=(col_month_offset + idx), value=month)
+        c = ws.cell(row=1, column=(col_month_offset + idx), value=month)
+        all_out_row = row_category_offset + categories.index("all-out")
+        all_in_row = row_category_offset + categories.index("all-in")
+        cur_col = c.column_letter
+        ws.cell(
+            row=all_out_row,
+            column=(col_month_offset + idx),
+            value=f"=SUM({cur_col}{row_category_offset}:{cur_col}{all_out_row - 1}",
+        )
+        ws.cell(
+            row=all_in_row,
+            column=(col_month_offset + idx),
+            value=f"=SUM({cur_col}{all_out_row + 1}:{cur_col}{all_in_row - 1}",
+        )
+        ws.cell(
+            row=all_in_row,
+            column=(col_month_offset + idx),
+            value=f"={cur_col}{all_in_row} - {cur_col}{all_out_row}",
+        )
 
     for idx, category in enumerate(categories):
         ws.cell(row=(row_category_offset + idx), column=1, value=category)
