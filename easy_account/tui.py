@@ -61,10 +61,14 @@ class SelectionsCell(VerticalGroup):
         yield CellSelector("Category", "category")
         yield CellSelector("User", "user")
 
-    def update_options(self, name: str, options: list):
+    def update_options(self, name: str, options: list | None):
         select = self.query_one(f"#{name}", Select)
-        select.disabled = False
-        select.set_options([(opt, opt) for opt in options])
+        if options:
+            select.disabled = False
+            select.set_options([(opt, opt) for opt in options])
+        else:
+            select.disabled = True
+            select.clear()
 
     @textual.on(Select.Changed, "#sheet")
     def update_menu_from_sheet(self, event):
@@ -73,6 +77,8 @@ class SelectionsCell(VerticalGroup):
         self.update_options("category", self.app.account.get_spreadsheet_categories())
         if self.app.account.is_multiuser():
             self.update_options("user", self.app.account.get_spreadsheet_users())
+        else:
+            self.update_options("user", None)
 
 
 class TextInputs(VerticalGroup):

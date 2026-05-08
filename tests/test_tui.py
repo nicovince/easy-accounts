@@ -61,13 +61,23 @@ def assert_select_menu(
             select.is_blank()
 
 
+def get_select_index_by_value_name(select, value) -> int:
+    return next(i for i, (p, v) in enumerate(select._options) if v == value)
+
+
 async def menu_select(pilot, app: textual.app.App, select_name: str, value: str) -> None:
     """Change the value of a Select menu."""
     select = app.screen.query_one(f"#{select_name}")
     assert not select.disabled, f"#{select_name} cannot be disabled."
+    option_index = get_select_index_by_value_name(select, value)
+    selected_index = get_select_index_by_value_name(select, select.value)
+    if selected_index:
+        selected_index -= 1
+    print(f"{selected_index=} {select.value=}")
+    print(f"{option_index=} {value=}")
     await pilot.click(f"#{select_name}")
-    await pilot.pause()
-    option_index = next(i for i, (p, v) in enumerate(select._options) if v == value)
+    for _ in range(selected_index):
+        await pilot.press("up")
     for _ in range(option_index + 1):
         await pilot.press("down")
     await pilot.press("enter")
@@ -152,7 +162,7 @@ api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
 
 
 async def test_tui_select_sheet_monouser(tui_app_opt_spreadsheet):
-    """Test sheet selection."""
+    """Test sheet selection with monouser."""
     app = tui_app_opt_spreadsheet
     async with app.run_test() as pilot:
         assert_select_menu(app, "sheet", False, ["mono user", "multi users"], None)
@@ -163,7 +173,7 @@ async def test_tui_select_sheet_monouser(tui_app_opt_spreadsheet):
 
 
 async def test_tui_select_sheet_multiuser(tui_app_opt_spreadsheet):
-    """Test sheet selection."""
+    """Test sheet selection with multiusers."""
     app = tui_app_opt_spreadsheet
     async with app.run_test() as pilot:
         assert_select_menu(app, "sheet", False, ["mono user", "multi users"], None)
@@ -171,3 +181,16 @@ async def test_tui_select_sheet_multiuser(tui_app_opt_spreadsheet):
         assert_select_menu(app, "month", False, conftest.get_months(), None)
         assert_select_menu(app, "category", False, conftest.get_categories(), None)
         assert_select_menu(app, "user", False, conftest.get_users(), None)
+
+
+async def test_tui_select_sheet_multiuser_to_monouser(tui_app_opt_spreadsheet):
+    """Test sheet selection
+
+    Check the users are cleared if selecting a monouser sheet afeer a multiuser's
+    """
+    app = tui_app_opt_spreadsheet
+    async with app.run_test() as pilot:
+        await menu_select(pilot, app, "sheet", "multi users")
+        assert_select_menu(app, "user", False, conftest.get_users(), None)
+        await menu_select(pilot, app, "sheet", "mono user")
+        assert_select_menu(app, "user", True)
