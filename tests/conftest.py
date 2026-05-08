@@ -31,11 +31,15 @@ def get_months():
     return months
 
 
+def get_categories():
+    return ["foo", "bar"]
+
+
 def fill_monouser_sheet(ws):
     months = get_months()
     col_month_offset = 2
     row_category_offset = 2
-    categories = ["foo", "bar"]
+    categories = get_categories()
     for idx, month in enumerate(months):
         ws.cell(row=1, column=(col_month_offset + idx), value=month)
 
@@ -47,7 +51,7 @@ def fill_monouser_sheet(ws):
 
 def fill_multiuser_sheet(ws):
     users = ["alice", "bob", "shared"]
-    categories = ["foo", "bar"]
+    categories = get_categories()
     col_month_offset = 2
     row_category_offset = 3
     months = get_months()

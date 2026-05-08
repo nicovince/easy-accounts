@@ -157,3 +157,6 @@ async def test_tui_select_sheet(tui_app_opt_spreadsheet):
     async with app.run_test() as pilot:
         assert_select_menu(app, "sheet", False, ["mono user", "multi users"], None)
         await menu_select(pilot, app, "sheet", "mono user")
+        assert_select_menu(app, "month", False, conftest.get_months(), None)
+        assert_select_menu(app, "category", False, conftest.get_categories(), None)
+        assert_select_menu(app, "user", True)

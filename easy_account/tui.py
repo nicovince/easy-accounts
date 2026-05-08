@@ -61,6 +61,16 @@ class SelectionsCell(VerticalGroup):
         yield CellSelector("Category", "category")
         yield CellSelector("User", "user")
 
+    def update_options(self, name: str, options: list):
+        select = self.query_one(f"#{name}", Select)
+        select.disabled = False
+        select.set_options([(opt, opt) for opt in options])
+
+    @textual.on(Select.Changed, "#sheet")
+    def update_menu_from_sheet(self):
+        self.update_options("month", self.app.account.get_spreadsheet_months())
+        self.update_options("category", self.app.account.get_spreadsheet_categories())
+
 
 class TextInputs(VerticalGroup):
     def compose(self) -> ComposeResult:
