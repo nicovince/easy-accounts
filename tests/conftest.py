@@ -35,6 +35,10 @@ def get_categories():
     return ["foo", "bar"]
 
 
+def get_users():
+    return ["alice", "bob", "shared"]
+
+
 def fill_monouser_sheet(ws):
     months = get_months()
     col_month_offset = 2
@@ -50,7 +54,7 @@ def fill_monouser_sheet(ws):
 
 
 def fill_multiuser_sheet(ws):
-    users = ["alice", "bob", "shared"]
+    users = get_users()
     categories = get_categories()
     col_month_offset = 2
     row_category_offset = 3

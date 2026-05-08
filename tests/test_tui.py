@@ -151,7 +151,7 @@ api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
             assert_select_menu(app, "user", True)
 
 
-async def test_tui_select_sheet(tui_app_opt_spreadsheet):
+async def test_tui_select_sheet_monouser(tui_app_opt_spreadsheet):
     """Test sheet selection."""
     app = tui_app_opt_spreadsheet
     async with app.run_test() as pilot:
@@ -160,3 +160,14 @@ async def test_tui_select_sheet(tui_app_opt_spreadsheet):
         assert_select_menu(app, "month", False, conftest.get_months(), None)
         assert_select_menu(app, "category", False, conftest.get_categories(), None)
         assert_select_menu(app, "user", True)
+
+
+async def test_tui_select_sheet_multiuser(tui_app_opt_spreadsheet):
+    """Test sheet selection."""
+    app = tui_app_opt_spreadsheet
+    async with app.run_test() as pilot:
+        assert_select_menu(app, "sheet", False, ["mono user", "multi users"], None)
+        await menu_select(pilot, app, "sheet", "multi users")
+        assert_select_menu(app, "month", False, conftest.get_months(), None)
+        assert_select_menu(app, "category", False, conftest.get_categories(), None)
+        assert_select_menu(app, "user", False, conftest.get_users(), None)

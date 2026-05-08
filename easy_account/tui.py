@@ -67,9 +67,12 @@ class SelectionsCell(VerticalGroup):
         select.set_options([(opt, opt) for opt in options])
 
     @textual.on(Select.Changed, "#sheet")
-    def update_menu_from_sheet(self):
+    def update_menu_from_sheet(self, event):
+        self.app.account.active_sheet = event.value
         self.update_options("month", self.app.account.get_spreadsheet_months())
         self.update_options("category", self.app.account.get_spreadsheet_categories())
+        if self.app.account.is_multiuser():
+            self.update_options("user", self.app.account.get_spreadsheet_users())
 
 
 class TextInputs(VerticalGroup):
