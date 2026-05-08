@@ -3,6 +3,7 @@ from textual.containers import VerticalGroup
 from textual.widgets import Button, Footer, Header, Input, Static, Select
 from textual.screen import Screen
 from textual.widget import Widget
+import textual
 import easy_account.config as ea_config
 import importlib.metadata
 import argparse
@@ -16,6 +17,16 @@ class Buttons(VerticalGroup):
         yield Button("Pull", id="pull", classes="box")
         yield Button("Save", id="save", classes="box")
         yield Button("Push", id="push", classes="box")
+
+    @textual.on(Button.Pressed, "#pull")
+    def pull_file(self) -> None:
+        """Action executed on pull."""
+        config = easy_account.config.load_config(self.app.args.config)
+        api_url = easy_account.config.get_kdrive_api_url(config)
+        assert api_url is not None
+        self.app.args.spreadsheet = easy_account.infomaniak.pull_file(api_url)
+        self.app.account = AccountSpreadsheet(self.app.args.spreadsheet)
+        self.screen.update_sheet_selection()
 
 
 class CellSelector(Widget):
@@ -88,26 +99,6 @@ class MainScreen(Screen):
 
     def on_mount(self) -> None:
         self.update_sheet_selection()
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "sheet":
-            # Find the widget by ID and update its content
-            display = self.query_one("#spent_value", Static)
-            display.update("555")
-            # You can also change styles dynamically
-            display.styles.color = "green"
-        elif event.button.id == "pull":
-            config = easy_account.config.load_config(self.app.args.config)
-            api_url = easy_account.config.get_kdrive_api_url(config)
-            assert api_url is not None
-            self.app.args.spreadsheet = easy_account.infomaniak.pull_file(api_url)
-            self.app.account = AccountSpreadsheet(self.app.args.spreadsheet)
-            self.update_sheet_selection()
-
-            # month_sel = self.query_one("#month", Select)
-            # month_sel.disabled = False
-            # months_opts = [(m, m) for m in self.app.account.get_spreadsheet_months()]
-            # month_sel.set_options(months_opts)
 
 
 class EasyAccountTUI(App):
