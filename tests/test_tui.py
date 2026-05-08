@@ -34,6 +34,7 @@ def assert_select_menu(
     app: textual.app.App,
     select_name: str,
     disabled: bool,
+    opts: list | None = None,
     value: str | None = None,
 ):
     """Verify that a select menu has the valid properties.
@@ -41,12 +42,17 @@ def assert_select_menu(
     app: the app to query
     select_name: the name of the select menu to query
     disabled: whether the select menu should be disabled or not
-    value: the expected value of the select menu, if not None
+    opts: The allowed options of the select menu, checked only if not None
+    value: the expected value of the select menu
     """
     select = app.screen.query_one(f"#{select_name}")
     assert (
         select.disabled == disabled
     ), f"#{select_name} Select must be {'disabled' if disabled else 'enabled'}"
+
+    if opts:
+        for opt in opts:
+            assert (opt, opt) in select._options
     if not disabled:
         if value is not None:
             assert select.value == value
@@ -84,7 +90,7 @@ async def test_tui_opt_spreadsheet(monkeypatch, tmp_path_cwd, spreadsheet_unmodi
     async with app.run_test():
         assert app.args.spreadsheet == spreadsheet_unmodified
         assert_select_menu(app, "sheet", False)
-        print(app.screen.query_one("#sheet")._options)
+        assert_select_menu(app, "sheet", False, ["mono user", "multi users"], None)
         assert_select_menu(app, "month", True)
         assert_select_menu(app, "category", True)
         assert_select_menu(app, "user", True)
@@ -119,7 +125,7 @@ api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
             ik_api_mock.get_file_info.assert_called_once_with(3615, 1234)
             ik_api_mock.download_file.assert_called_once()
             assert app.args.spreadsheet == mock_file_info.name
-            assert_select_menu(app, "sheet", False)
+            assert_select_menu(app, "sheet", False, ["mono user", "multi users"], None)
             assert_select_menu(app, "month", True)
             assert_select_menu(app, "category", True)
             assert_select_menu(app, "user", True)
