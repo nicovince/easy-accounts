@@ -2,6 +2,7 @@ from unittest import mock
 import argparse
 import sys
 import textual
+import pytest
 
 from unittest.mock import MagicMock, patch
 from easy_account.tui import EasyAccountTUI
@@ -60,6 +61,20 @@ def assert_select_menu(
             select.is_blank()
 
 
+async def menu_select(pilot, app: textual.app.App, select_name: str, value: str) -> None:
+    """Change the value of a Select menu."""
+    select = app.screen.query_one(f"#{select_name}")
+    assert not select.disabled, f"#{select_name} cannot be disabled."
+    await pilot.click(f"#{select_name}")
+    await pilot.pause()
+    option_index = next(i for i, (p, v) in enumerate(select._options) if v == value)
+    for _ in range(option_index + 1):
+        await pilot.press("down")
+    await pilot.press("enter")
+    await pilot.pause()
+    assert select.value == value
+
+
 @mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(config=".easy-account.toml", spreadsheet=None),
@@ -73,10 +88,8 @@ async def test_tui_default_select_menu_state(mock_args):
         assert_select_menu(app, "user", True)
 
 
-async def test_tui_opt_spreadsheet(monkeypatch, tmp_path_cwd, spreadsheet_unmodified):
-    """Test the option to specify the spreadsheet on the command line.
-
-    Check the sheet selection menu is enabled"""
+@pytest.fixture
+def tui_app_opt_spreadsheet(monkeypatch, tmp_path_cwd, spreadsheet_unmodified):
     monkeypatch.setattr(
         sys,
         "argv",
@@ -87,9 +100,16 @@ async def test_tui_opt_spreadsheet(monkeypatch, tmp_path_cwd, spreadsheet_unmodi
         ],
     )
     app = EasyAccountTUI()
+    return app
+
+
+async def test_tui_opt_spreadsheet(tui_app_opt_spreadsheet, spreadsheet_unmodified):
+    """Test the option to specify the spreadsheet on the command line.
+
+    Check the sheet selection menu is enabled"""
+    app = tui_app_opt_spreadsheet
     async with app.run_test():
         assert app.args.spreadsheet == spreadsheet_unmodified
-        assert_select_menu(app, "sheet", False)
         assert_select_menu(app, "sheet", False, ["mono user", "multi users"], None)
         assert_select_menu(app, "month", True)
         assert_select_menu(app, "category", True)
@@ -129,3 +149,11 @@ api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
             assert_select_menu(app, "month", True)
             assert_select_menu(app, "category", True)
             assert_select_menu(app, "user", True)
+
+
+async def test_tui_select_sheet(tui_app_opt_spreadsheet):
+    """Test sheet selection."""
+    app = tui_app_opt_spreadsheet
+    async with app.run_test() as pilot:
+        assert_select_menu(app, "sheet", False, ["mono user", "multi users"], None)
+        await menu_select(pilot, app, "sheet", "mono user")
