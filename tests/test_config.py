@@ -496,7 +496,7 @@ class TestValidateConfigAgainstSpreadsheet:
 months = ["janvier", "fevrier", "mars"]
 
 [categories]
-categories = ["foo", "bar"]
+categories = ["out-foo", "out-bar"]
 """
         config_path.write_text(config_content)
         config = load_config(config_path)
@@ -510,7 +510,7 @@ categories = ["foo", "bar"]
 months = ["invalid_month"]
 
 [categories]
-categories = ["foo"]
+categories = ["out-foo"]
 """
         config_path.write_text(config_content)
         config = load_config(config_path)
@@ -540,7 +540,7 @@ categories = ["invalid_category"]
 months = ["janvier"]
 
 [categories]
-categories = ["foo"]
+categories = ["out-foo"]
 
 [users]
 users = ["invalid_user"]
@@ -560,7 +560,7 @@ users = ["invalid_user"]
 months = ["janvier"]
 
 [categories]
-categories = ["foo"]
+categories = ["out-foo"]
 
 [users]
 users = ["alice", "bob", "shared"]
@@ -587,7 +587,7 @@ class TestCreateConfigFromSpreadsheet:
         users = get_users(config)
 
         assert "janvier" in months
-        assert "foo" in categories
+        assert "out-foo" in categories
         assert users == []
 
     def test_create_config_from_multiuser_spreadsheet(self, tmp_path, multiuser_account_fixture):
@@ -604,6 +604,6 @@ class TestCreateConfigFromSpreadsheet:
         users = get_users(config)
 
         assert "janvier" in months
-        assert "foo" in categories
+        assert "out-foo" in categories
         assert "alice" in users
         assert "bob" in users

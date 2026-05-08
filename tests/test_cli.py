@@ -38,7 +38,7 @@ class TestCliUserValidation:
                 str(spreadsheet),
                 "mono user",
                 "janvier",
-                "foo",
+                "out-foo",
                 "100",
                 "--user",
                 "invalid_user",
@@ -65,7 +65,7 @@ class TestCliUserValidation:
 months = ["janvier"]
 
 [categories]
-categories = ["foo"]
+categories = ["out-foo"]
 
 [users]
 users = ["john", "jane", "jack"]
@@ -83,7 +83,7 @@ users = ["john", "jane", "jack"]
                 str(spreadsheet),
                 "mono user",
                 "janvier",
-                "foo",
+                "out-foo",
                 "100",
                 "--user",
                 "john",
@@ -111,7 +111,7 @@ users = ["john", "jane", "jack"]
                 str(spreadsheet),
                 "multi users",
                 "janvier",
-                "foo",
+                "out-foo",
                 "100",
                 "--user",
                 "invalid_user",
@@ -140,7 +140,7 @@ users = ["john", "jane", "jack"]
                 str(spreadsheet),
                 "multi users",
                 "janvier",
-                "foo",
+                "out-foo",
                 "100",
                 "--user",
                 "alice",
@@ -166,7 +166,7 @@ users = ["john", "jane", "jack"]
                 str(spreadsheet),
                 "mono user",
                 "janvier",
-                "foo",
+                "out-foo",
                 "100",
                 "--user",
                 "any_user",
@@ -194,7 +194,7 @@ class TestCliInsertCmd:
                 str(spreadsheet_unmodified),
                 "mono user",
                 "janvier",
-                "bar",
+                "out-bar",
                 "100",
                 "--show-only",
             ],
@@ -460,12 +460,12 @@ class TestCliDefaultReportFromConfig:
                 str(spreadsheet),
                 "multi users",
                 "janvier",
-                "bar",
+                "out-bar",
                 "100",
                 "--user",
                 "bob",
                 "--report",
-                "janvier,bar,bob",
+                "janvier,out-bar,bob",
             ],
         )
 
@@ -481,10 +481,10 @@ class TestCliDefaultReportFromConfig:
 months = ["janvier", "fevrier", "mars"]
 
 [categories]
-categories = ["foo", "bar"]
+categories = ["out-foo", "out-bar"]
 
 [report]
-report = "janvier,bar"
+report = "janvier,out-bar"
 """
         config_path.write_text(config_content)
 
@@ -497,7 +497,7 @@ report = "janvier,bar"
                 str(spreadsheet),
                 "mono user",
                 "janvier",
-                "bar",
+                "out-bar",
                 "100",
             ],
         )
@@ -516,10 +516,10 @@ report = "janvier,bar"
 months = ["janvier", "fevrier", "mars"]
 
 [categories]
-categories = ["foo", "bar"]
+categories = ["out-foo", "out-bar"]
 
 [report]
-report = "janvier,foo"
+report = "janvier,out-foo"
 """
         config_path.write_text(config_content)
 
@@ -532,10 +532,10 @@ report = "janvier,foo"
                 str(spreadsheet),
                 "mono user",
                 "janvier",
-                "bar",
+                "out-bar",
                 "100",
                 "--report",
-                "janvier,bar",
+                "janvier,out-bar",
             ],
         )
 
@@ -556,10 +556,10 @@ report = "janvier,foo"
                 str(spreadsheet),
                 "mono user",
                 "janvier",
-                "bar",
+                "out-bar",
                 "100",
                 "--report",
-                ",bar",
+                ",out-bar",
             ],
         )
 
@@ -578,10 +578,10 @@ report = "janvier,foo"
                 str(spreadsheet),
                 "mono user",
                 "fevrier",
-                "bar",
+                "out-bar",
                 "100",
                 "--report",
-                ",bar",
+                ",out-bar",
             ],
         )
 
@@ -602,12 +602,12 @@ report = "janvier,foo"
                 str(spreadsheet),
                 "multi users",
                 "janvier",
-                "bar",
+                "out-bar",
                 "100",
                 "--user",
                 "bob",
                 "--report",
-                ",bar,bob",
+                ",out-bar,bob",
             ],
         )
 
@@ -625,10 +625,10 @@ report = "janvier,foo"
 months = ["janvier", "fevrier", "mars"]
 
 [categories]
-categories = ["foo", "bar"]
+categories = ["out-foo", "out-bar"]
 
 [report]
-report = ",bar"
+report = ",out-bar"
 """
         config_path.write_text(config_content)
 
@@ -641,7 +641,7 @@ report = ",bar"
                 str(spreadsheet),
                 "mono user",
                 "janvier",
-                "bar",
+                "out-bar",
                 "100",
             ],
         )
@@ -665,7 +665,7 @@ class TestCliShowCmd(TestCli):
                 str(spreadsheet_unmodified),
                 "mono user",
                 "janvier",
-                "bar",
+                "out-bar",
             ],
         )
 
@@ -685,7 +685,7 @@ class TestCliShowCmd(TestCli):
                 str(spreadsheet_unmodified),
                 "multi users",
                 "janvier",
-                "bar",
+                "out-bar",
                 "--user",
                 "bob",
             ],
@@ -706,17 +706,17 @@ class TestCliShowCmd(TestCli):
                 str(spreadsheet),
                 "mono user",
                 "janvier",
-                "bar",
+                "out-bar",
                 "100",
                 "--report",
-                "janvier,foo",
-                "janvier,bar",
+                "janvier,out-foo",
+                "janvier,out-bar",
             ],
         )
 
         easy_account.cli.main()
         captured = capsys.readouterr()
-        # foo has value 0, bar has value 1334 in test spreadsheet
+        # out-foo has value 0, out-bar has value 1334 in test spreadsheet
         self.assert_show(captured.out, 0)
         self.assert_show(captured.out, 1334)
 
@@ -728,10 +728,10 @@ class TestCliShowCmd(TestCli):
 months = ["janvier", "fevrier", "mars"]
 
 [categories]
-categories = ["foo", "bar"]
+categories = ["out-foo", "out-bar"]
 
 [report]
-report = ["janvier,foo", "janvier,bar"]
+report = ["janvier,out-foo", "janvier,out-bar"]
 """
         config_path.write_text(config_content)
 
@@ -744,14 +744,14 @@ report = ["janvier,foo", "janvier,bar"]
                 str(spreadsheet),
                 "mono user",
                 "janvier",
-                "bar",
+                "out-bar",
                 "100",
             ],
         )
 
         easy_account.cli.main()
         captured = capsys.readouterr()
-        # foo has value 0, bar has value 1334 in test spreadsheet
+        # out-foo has value 0, out-bar has value 1334 in test spreadsheet
         self.assert_show(captured.out, 0)
         self.assert_show(captured.out, 1334)
 
@@ -765,10 +765,10 @@ report = ["janvier,foo", "janvier,bar"]
 months = ["janvier", "fevrier", "mars"]
 
 [categories]
-categories = ["foo", "bar"]
+categories = ["out-foo", "out-bar"]
 
 [report]
-report = ["janvier,foo", "fevrier,bar"]
+report = ["janvier,out-foo", "fevrier,out-bar"]
 """
         config_path.write_text(config_content)
 
@@ -781,10 +781,10 @@ report = ["janvier,foo", "fevrier,bar"]
                 str(spreadsheet),
                 "mono user",
                 "janvier",
-                "bar",
+                "out-bar",
                 "100",
                 "--report",
-                "janvier,bar",
+                "janvier,out-bar",
             ],
         )
 

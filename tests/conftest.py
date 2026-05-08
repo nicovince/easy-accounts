@@ -32,7 +32,7 @@ def get_months():
 
 
 def get_categories():
-    return ["foo", "bar"]
+    return ["out-foo", "out-bar", "all-out", "in-foo", "in-bar", "all-in", "balance"]
 
 
 def get_users():

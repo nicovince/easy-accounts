@@ -21,7 +21,7 @@ def test_account_constructor():
 
 
 def test_account_get_row_from_category(mono_account):
-    cell = mono_account.get_cell_category("foo")
+    cell = mono_account.get_cell_category("out-foo")
     assert cell.row == 2
 
 
@@ -41,13 +41,13 @@ def test_account_get_cell_month_invalid(mono_account):
 
 
 def test_account_get_cell_month_category(mono_account):
-    c = mono_account.get_cell(month="janvier", category="foo")
+    c = mono_account.get_cell(month="janvier", category="out-foo")
     assert c.coordinate == "B2"
 
 
 def test_account_get_cell_month_category_invalid_month(mono_account):
     with pytest.raises(AssertionError):
-        mono_account.get_cell(month="pwet", category="foo")
+        mono_account.get_cell(month="pwet", category="out-foo")
 
 
 def test_account_get_cell_month_category_invalid_category(mono_account):
@@ -74,23 +74,23 @@ def test_account_multi_next_month(multi_account):
 
 
 def test_account_multi_get_cell_month_category_user(multi_account):
-    c = multi_account.get_cell(month="janvier", category="foo", user="alice")
+    c = multi_account.get_cell(month="janvier", category="out-foo", user="alice")
     assert c.coordinate == "B3"
-    c = multi_account.get_cell(month="janvier", category="foo", user="bob")
+    c = multi_account.get_cell(month="janvier", category="out-foo", user="bob")
     assert c.coordinate == "C3"
-    c = multi_account.get_cell(month="janvier", category="foo", user="shared")
+    c = multi_account.get_cell(month="janvier", category="out-foo", user="shared")
     assert c.coordinate == "D3"
 
-    c = multi_account.get_cell(month="decembre", category="foo", user="alice")
+    c = multi_account.get_cell(month="decembre", category="out-foo", user="alice")
     assert c.coordinate == "AF3"
-    c = multi_account.get_cell(month="decembre", category="foo", user="bob")
+    c = multi_account.get_cell(month="decembre", category="out-foo", user="bob")
     assert c.coordinate == "AG3"
-    c = multi_account.get_cell(month="decembre", category="foo", user="shared")
+    c = multi_account.get_cell(month="decembre", category="out-foo", user="shared")
     assert c.coordinate == "AH3"
 
 
 def test_account_multisheet_valid_sheet(multi_account):
-    c = multi_account.get_cell(month="janvier", category="foo", user="alice")
+    c = multi_account.get_cell(month="janvier", category="out-foo", user="alice")
     assert c.coordinate == "B3"
 
 
@@ -100,48 +100,48 @@ def test_account_multisheet_invalid_sheet(mono_account):
 
 
 def test_account_add_entry(multi_account):
-    c = multi_account.get_cell(month="janvier", category="foo")
-    multi_account.add_entry("janvier", "foo", 3.14, "pi")
+    c = multi_account.get_cell(month="janvier", category="out-foo")
+    multi_account.add_entry("janvier", "out-foo", 3.14, "pi")
     assert c.value == "=3.14"
     assert c.comment.text == "pi"
-    multi_account.add_entry("janvier", "foo", 3.14, "pi")
+    multi_account.add_entry("janvier", "out-foo", 3.14, "pi")
     assert c.value == "=3.14 + 3.14"
     assert c.comment.text == "pi\npi"
-    c = multi_account.get_cell(month="fevrier", category="foo")
-    multi_account.add_entry("fevrier", "foo", 3615)
+    c = multi_account.get_cell(month="fevrier", category="out-foo")
+    multi_account.add_entry("fevrier", "out-foo", 3615)
     assert c.value == "=3615"
     assert c.comment is None
 
 
 def test_account_add_entry_with_list_empty_cell(mono_account):
     """Test adding a list of floats to an empty cell."""
-    c = mono_account.get_cell(month="janvier", category="foo")
-    mono_account.add_entry("janvier", "foo", [1.0, 2.0, 3.0])
+    c = mono_account.get_cell(month="janvier", category="out-foo")
+    mono_account.add_entry("janvier", "out-foo", [1.0, 2.0, 3.0])
     assert c.value == "=1.0 + 2.0 + 3.0"
     assert c.comment is None
 
 
 def test_account_add_entry_with_list_existing_cell(mono_account):
     """Test adding a list of floats to an existing cell."""
-    c = mono_account.get_cell(month="mars", category="foo")
-    mono_account.add_entry("mars", "foo", [1.0, 2.0])
+    c = mono_account.get_cell(month="mars", category="out-foo")
+    mono_account.add_entry("mars", "out-foo", [1.0, 2.0])
     assert c.value == "=1.0 + 2.0"
-    mono_account.add_entry("mars", "foo", [3.0, 4.0])
+    mono_account.add_entry("mars", "out-foo", [3.0, 4.0])
     assert c.value == "=1.0 + 2.0 + 3.0 + 4.0"
 
 
 def test_account_add_entry_with_list_and_comment(mono_account):
     """Test adding a list of floats with a comment."""
-    c = mono_account.get_cell(month="avril", category="foo")
-    mono_account.add_entry("avril", "foo", [5.5, 4.5], "mixed")
+    c = mono_account.get_cell(month="avril", category="out-foo")
+    mono_account.add_entry("avril", "out-foo", [5.5, 4.5], "mixed")
     assert c.value == "=5.5 + 4.5"
     assert c.comment.text == "mixed"
 
 
 def test_account_add_entry_with_single_float_in_list(mono_account):
     """Test adding a single float in a list."""
-    c = mono_account.get_cell(month="mai", category="foo")
-    mono_account.add_entry("mai", "foo", [10.0])
+    c = mono_account.get_cell(month="mai", category="out-foo")
+    mono_account.add_entry("mai", "out-foo", [10.0])
     assert c.value == "=10.0"
 
 
@@ -165,8 +165,8 @@ class TestAccountSpreadsheetHelpers:
     def test_get_spreadsheet_categories(self, mono_account):
         """Test getting categories from spreadsheet."""
         categories = mono_account.get_spreadsheet_categories()
-        assert "foo" in categories
-        assert "bar" in categories
+        assert "out-foo" in categories
+        assert "out-bar" in categories
 
     def test_get_spreadsheet_users_monouser(self, mono_account):
         """Test that monouser spreadsheet returns empty user list."""
