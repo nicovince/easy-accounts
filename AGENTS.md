@@ -3,30 +3,29 @@
 ## Commands
 
 - **Run tests**: `python -m pytest -v`
+- **Run a single test**: `python -m pytest tests/test_file.py::test_name -v`
 - **Lint**: `ruff check .`
 - **Format**: `ruff format .`
-- **Run CLI**: `easy-account <command> ...` (requires `.easy-account.toml` in working directory)
+- **Run CLI**: `easy-account <command> ...` (requires `.easy-account.toml` in CWD)
+- **Run TUI**: `easy-account-tui`
+- **Pre-commit**: `ruff check --fix` then `ruff-format` (via `.pre-commit-config.yaml`)
 
-## Entry Point
+## Entry Points
 
-- CLI entry: `easy_account.cli:main` (defined in pyproject.toml)
+- **CLI**: `easy_account.cli:main` → subcommands: `insert`, `show`, `pull`, `push`, `--init`, `--config`
+- **TUI**: `easy_account.tui:main` → Textual app (requires API URL in config)
 
-## Setup Requirements
+## Testing
 
-1. **Config file required**: Create `.easy-account.toml` before using the CLI:
-   ```bash
-   easy-account --init [spreadsheet.xlsx]
-   ```
-2. **Shell autocompletion** (optional): Add to shell profile:
-   ```bash
-   eval "$(register-python-argcomplete easy-account)"
-   ```
-3. **Pre-commit hooks** (optional):
-   ```bash
-   pre-commit install
-   ```
+- **Fixtures** in `tests/conftest.py` create temp xlsx workbooks (`spreadsheet`, `monouser_account`, `multiuser_account_fixture`, etc.)
+- **Async tests** use `asyncio_mode = "auto"` (no need for `@pytest.mark.asyncio`)
+- **Snapshot tests** (TUI) use `pytest-textual-snapshot` with `snap_compare` fixture; SVGs stored in `tests/__snapshots__/test_tui/`
+- Test deps: `pytest`, `pytest-asyncio`, `pytest-textual-snapshot`
 
-## Notable Constraints
+## Toolchain
 
-- Months and categories must be defined in `.easy-account.toml` - invalid values will fail
-- Configuration file must be in the directory where the command runs (not in the package)
+- **Ruff** configured in `.ruff.toml`: target py310, line length 100, double quotes, select `E4/E7/E9/F/E501`
+- **No typechecker** configured (no mypy/pyright)
+- **Config required**: `.easy-account.toml` must exist in CWD (run `easy-account --init [file.xlsx]` to create)
+- **Months and categories** must be defined in `.easy-account.toml` — invalid values fail at runtime
+- **Formula evaluation** uses `openpyxl.formula.Tokenizer` with infix→postfix conversion
