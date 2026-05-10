@@ -263,6 +263,9 @@ users = [
     "charlie",
 ]
 
+[report]
+report = "janvier,groceries,alice"
+
 # Infomaniak kdrive configuration (optional)
 # Uncomment and configure to use the 'pull' subcommand
 # [kdrive]
