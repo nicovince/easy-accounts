@@ -15,6 +15,7 @@ from easy_account.config import (
     get_kdrive_api_url,
     get_months,
     get_report,
+    get_tui_config,
     get_users,
     get_spreadsheet_users,
     is_multiuser_spreadsheet,
@@ -455,6 +456,107 @@ report = ",groceries"
     report = get_report(config, current_month=None)
 
     assert report == [",groceries"]
+
+
+class TestGetTuiConfig:
+    """Tests for get_tui_config function."""
+
+    def test_defaults_when_not_configured(self, tmp_path):
+        """Test that defaults are returned when [tui] section is missing."""
+        config_content = """
+[months]
+months = ["janvier"]
+[categories]
+categories = ["foo"]
+"""
+        config_path = tmp_path / ".easy-account.toml"
+        config_path.write_text(config_content)
+        config = load_config(config_path)
+        result = get_tui_config(config)
+        assert result == {
+            "total_spent_category": None,
+            "total_income_category": None,
+            "balance_category": None,
+        }
+
+    def test_defaults_without_config_file(self, tmp_path_cwd):
+        """Test that defaults are returned when no config file exists."""
+        result = get_tui_config()
+        assert result == {
+            "total_spent_category": None,
+            "total_income_category": None,
+            "balance_category": None,
+        }
+
+    def test_custom_values(self, tmp_path):
+        """Test that custom TUI config values are returned."""
+        config_content = """
+[months]
+months = ["janvier"]
+[categories]
+categories = ["foo"]
+[tui]
+total_spent_category = "total-out"
+total_income_category = "total-in"
+balance_category = "net"
+"""
+        config_path = tmp_path / ".easy-account.toml"
+        config_path.write_text(config_content)
+        config = load_config(config_path)
+        result = get_tui_config(config)
+        assert result == {
+            "total_spent_category": "total-out",
+            "total_income_category": "total-in",
+            "balance_category": "net",
+        }
+
+    def test_partial_config_uses_defaults(self, tmp_path):
+        """Test that missing keys fall back to defaults."""
+        config_content = """
+[months]
+months = ["janvier"]
+[categories]
+categories = ["foo"]
+[tui]
+total_spent_category = "custom-out"
+"""
+        config_path = tmp_path / ".easy-account.toml"
+        config_path.write_text(config_content)
+        config = load_config(config_path)
+        result = get_tui_config(config)
+        assert result["total_spent_category"] == "custom-out"
+        assert result["total_income_category"] is None
+        assert result["balance_category"] is None
+
+    def test_empty_string_falls_back_to_default(self, tmp_path):
+        """Test that empty string values fall back to defaults."""
+        config_content = """
+[months]
+months = ["janvier"]
+[categories]
+categories = ["foo"]
+[tui]
+total_spent_category = ""
+total_income_category = "all-in"
+balance_category = "balance"
+"""
+        config_path = tmp_path / ".easy-account.toml"
+        config_path.write_text(config_content)
+        config = load_config(config_path)
+        result = get_tui_config(config)
+        assert result["total_spent_category"] is None
+
+    def test_example_config_includes_tui_section(self, tmp_path):
+        """Test that create_example_config includes the [tui] section."""
+        config_path = tmp_path / "test_example_tui.toml"
+        create_example_config(config_path)
+        config = load_config(config_path)
+        result = get_tui_config(config)
+        assert result == {
+            "total_spent_category": "all-out",
+            "total_income_category": "all-in",
+            "balance_category": "balance",
+        }
 
 
 class TestIsMultiuserSpreadsheet:

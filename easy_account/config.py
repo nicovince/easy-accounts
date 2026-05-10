@@ -121,6 +121,41 @@ def get_categories(config: dict | None = None) -> list[str]:
         raise ConfigError(f"Failed to read categories from config: {e}")
 
 
+def get_tui_config(config: dict | None = None) -> dict:
+    """Get TUI configuration from config.
+
+    Args:
+        config: Configuration dictionary. If None, loads from file.
+
+    Returns:
+        Dictionary with keys: total_spent_category, total_income_category,
+        balance_category. Falls back to defaults if not configured.
+    """
+    defaults = {
+        "total_spent_category": None,
+        "total_income_category": None,
+        "balance_category": None,
+    }
+    if config is None:
+        try:
+            config = load_config()
+        except ConfigError:
+            return defaults
+
+    try:
+        tui_config = config.get("tui", {})
+        if not isinstance(tui_config, dict):
+            return defaults
+
+        result = {}
+        for key, default in defaults.items():
+            val = tui_config.get(key)
+            result[key] = val if isinstance(val, str) and val else default
+        return result
+    except Exception:
+        return defaults
+
+
 def get_report(config: dict | None = None, current_month: str = None) -> list[str] | None:
     """Get default report cells from config.
 
@@ -265,6 +300,12 @@ users = [
 
 [report]
 report = "janvier,groceries,alice"
+
+[tui]
+# Category names used in the TUI display (optional)
+total_spent_category = "all-out"
+total_income_category = "all-in"
+balance_category = "balance"
 
 # Infomaniak kdrive configuration (optional)
 # Uncomment and configure to use the 'pull' subcommand
