@@ -99,12 +99,14 @@ async def test_tui_default_select_menu_state(mock_args):
 
 
 @pytest.fixture
-def tui_app_opt_spreadsheet(monkeypatch, tmp_path_cwd, spreadsheet_unmodified):
+def tui_app_opt_spreadsheet(monkeypatch, default_tui_easy_account_cfg, spreadsheet_unmodified):
     monkeypatch.setattr(
         sys,
         "argv",
         [
             "easy-account-tui",
+            "-c",
+            default_tui_easy_account_cfg,
             "-f",
             spreadsheet_unmodified,
         ],
@@ -194,3 +196,17 @@ async def test_tui_select_sheet_multiuser_to_monouser(tui_app_opt_spreadsheet):
         assert_select_menu(app, "user", False, conftest.get_users(), None)
         await menu_select(pilot, app, "sheet", "mono user")
         assert_select_menu(app, "user", True)
+
+
+@pytest.fixture(scope="session")
+def default_tui_easy_account_cfg(tmp_path_factory):
+    """Fixture to create a default configuration file."""
+    config_path = tmp_path_factory.mktemp("template") / ".easy-account.toml"
+    config_content = """
+[tui]
+total_spent_category = "total-out"
+total_income_category = "total-in"
+balance_category = "net"
+"""
+    config_path.write_text(config_content)
+    return str(config_path)
