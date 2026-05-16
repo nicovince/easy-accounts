@@ -61,6 +61,21 @@ def assert_select_menu(
             select.is_blank()
 
 
+def assert_fetched_val(
+    app: textual.app.App,
+    fetched_name: str,
+    value: str,
+):
+    """Verify a fetched value.
+
+    app: the app to query
+    fetched_name: The name of the fetched value widget
+    value: The expected value
+    """
+    fetched_widget = app.screen.query_one(f"#{fetched_name}")
+    assert fetched_widget.content == value
+
+
 def get_select_index_by_value_name(select, value) -> int:
     return next(i for i, (p, v) in enumerate(select._options) if v == value)
 
@@ -96,6 +111,20 @@ async def test_tui_default_select_menu_state(mock_args):
         assert_select_menu(app, "month", True)
         assert_select_menu(app, "category", True)
         assert_select_menu(app, "user", True)
+
+
+@pytest.fixture(scope="session")
+def default_tui_easy_account_cfg(tmp_path_factory):
+    """Fixture to create a default configuration file."""
+    config_path = tmp_path_factory.mktemp("template") / ".easy-account.toml"
+    config_content = """
+[tui]
+total_spent_category = "total-out"
+total_income_category = "total-in"
+balance_category = "net"
+"""
+    config_path.write_text(config_content)
+    return str(config_path)
 
 
 @pytest.fixture
@@ -198,15 +227,12 @@ async def test_tui_select_sheet_multiuser_to_monouser(tui_app_opt_spreadsheet):
         assert_select_menu(app, "user", True)
 
 
-@pytest.fixture(scope="session")
-def default_tui_easy_account_cfg(tmp_path_factory):
-    """Fixture to create a default configuration file."""
-    config_path = tmp_path_factory.mktemp("template") / ".easy-account.toml"
-    config_content = """
-[tui]
-total_spent_category = "total-out"
-total_income_category = "total-in"
-balance_category = "net"
-"""
-    config_path.write_text(config_content)
-    return str(config_path)
+async def test_tui_all_out_value(tui_app_opt_spreadsheet):
+    """Test the all out informational value."""
+    app = tui_app_opt_spreadsheet
+    async with app.run_test(size=(100, 50)) as pilot:
+        assert_select_menu(app, "sheet", False, ["mono user", "multi users"], None)
+        await menu_select(pilot, app, "sheet", "mono user")
+        assert_select_menu(app, "month", False, conftest.get_months(), None)
+        await menu_select(pilot, app, "month", "janvier")
+        assert_fetched_val(app, "spent_value", "1234")

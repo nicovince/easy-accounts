@@ -80,6 +80,10 @@ class SelectionsCell(VerticalGroup):
         else:
             self.update_options("user", None)
 
+    @textual.on(Select.Changed, "#month")
+    def update_fetched_vals_from_month(self, event):
+        print(f"Updating on month event: {event.value}")
+
 
 class TextInputs(VerticalGroup):
     def compose(self) -> ComposeResult:
