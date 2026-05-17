@@ -88,7 +88,11 @@ class SelectionsCell(VerticalGroup):
     @textual.on(Select.Changed, "#month")
     def update_fetched_vals_from_month(self, event):
         month = event.value
-        config = easy_account.config.load_config(self.app.args.config)
+        try:
+            config = easy_account.config.load_config(self.app.args.config)
+        except easy_account.config.ConfigError:
+            config = None
+
         tui_config = easy_account.config.get_tui_config(config)
         category_widget_links = (
             ("spent_value", tui_config["total_spent_category"]),
@@ -96,8 +100,11 @@ class SelectionsCell(VerticalGroup):
             ("balance", tui_config["balance_category"]),
         )
         for widget_name, category in category_widget_links:
-            cell = self.app.account.get_cell(month, category)
-            val = self.app.account.evaluate(cell)
+            if category:
+                cell = self.app.account.get_cell(month, category)
+                val = self.app.account.evaluate(cell)
+            else:
+                val = "N/A"
             self.update_static(widget_name, str(val))
 
 

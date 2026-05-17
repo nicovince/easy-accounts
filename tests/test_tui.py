@@ -115,7 +115,7 @@ async def test_tui_default_select_menu_state(mock_args):
 
 
 @pytest.fixture(scope="session")
-def default_tui_easy_account_cfg(tmp_path_factory):
+def simple_tui_easy_account_cfg(tmp_path_factory):
     """Fixture to create a default configuration file."""
     config_path = tmp_path_factory.mktemp("template") / ".easy-account.toml"
     config_content = """
@@ -128,22 +128,42 @@ balance_category = "balance"
     return str(config_path)
 
 
+def launch_app():
+    logging.info("Command line: %s", " ".join(sys.argv))
+    app = EasyAccountTUI()
+    return app
+
+
 @pytest.fixture
-def tui_app_opt_spreadsheet(monkeypatch, default_tui_easy_account_cfg, spreadsheet_unmodified):
+def tui_app_nocfg_spreadsheet(monkeypatch, spreadsheet_unmodified):
+    """Launch app with a default config file."""
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "easy-account-tui",
+            "-f",
+            spreadsheet_unmodified,
+        ],
+    )
+    return launch_app()
+
+
+@pytest.fixture
+def tui_app_opt_spreadsheet(monkeypatch, simple_tui_easy_account_cfg, spreadsheet_unmodified):
+    """Launch app with a default config file."""
     monkeypatch.setattr(
         sys,
         "argv",
         [
             "easy-account-tui",
             "-c",
-            default_tui_easy_account_cfg,
+            simple_tui_easy_account_cfg,
             "-f",
             spreadsheet_unmodified,
         ],
     )
-    logging.info("Command line: %s", " ".join(sys.argv))
-    app = EasyAccountTUI()
-    return app
+    return launch_app()
 
 
 async def test_tui_opt_spreadsheet(tui_app_opt_spreadsheet, spreadsheet_unmodified):
@@ -260,3 +280,14 @@ async def test_tui_balance_value(tui_app_opt_spreadsheet):
         assert_select_menu(app, "month", False, conftest.get_months(), None)
         await menu_select(pilot, app, "month", "janvier")
         assert_fetched_val(app, "balance", "-1000")
+
+
+async def test_tui_fetched_val_no_cfg(tui_app_nocfg_spreadsheet):
+    """Test the app when no config file is provided."""
+    app = tui_app_nocfg_spreadsheet
+    async with app.run_test(size=(100, 50)) as pilot:
+        assert_select_menu(app, "sheet", False, ["mono user", "multi users"], None)
+        await menu_select(pilot, app, "sheet", "mono user")
+        assert_select_menu(app, "month", False, conftest.get_months(), None)
+        await menu_select(pilot, app, "month", "janvier")
+        assert_fetched_val(app, "balance", "N/A")
