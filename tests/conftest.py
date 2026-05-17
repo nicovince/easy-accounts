@@ -44,11 +44,11 @@ def fill_monouser_sheet(ws):
     col_month_offset = 2
     row_category_offset = 2
     categories = get_categories()
+    all_out_row = row_category_offset + categories.index("all-out")
+    all_in_row = row_category_offset + categories.index("all-in")
+    balance_row = row_category_offset + categories.index("balance")
     for idx, month in enumerate(months):
         c = ws.cell(row=1, column=(col_month_offset + idx), value=month)
-        all_out_row = row_category_offset + categories.index("all-out")
-        all_in_row = row_category_offset + categories.index("all-in")
-        balance_row = row_category_offset + categories.index("balance")
         cur_col = c.column_letter
         ws.cell(
             row=all_out_row,
@@ -82,6 +82,9 @@ def fill_multiuser_sheet(ws):
     categories = get_categories()
     col_month_offset = 2
     row_category_offset = 3
+    all_out_row = row_category_offset + categories.index("all-out")
+    all_in_row = row_category_offset + categories.index("all-in")
+    balance_row = row_category_offset + categories.index("balance")
     months = get_months()
     for idx, month in enumerate(months):
         month_start_col = col_month_offset + idx * len(users)
@@ -91,7 +94,23 @@ def fill_multiuser_sheet(ws):
             start_row=1, start_column=month_start_col, end_row=1, end_column=month_end_col
         )
         for user_idx, user in enumerate(users):
-            ws.cell(row=2, column=(col_month_offset + idx * len(users) + user_idx), value=user)
+            c = ws.cell(row=2, column=(col_month_offset + idx * len(users) + user_idx), value=user)
+            cur_col = c.column_letter
+            ws.cell(
+                row=all_out_row,
+                column=c.col_idx,
+                value=f"=SUM({cur_col}{row_category_offset}:{cur_col}{all_out_row - 1}",
+            )
+            ws.cell(
+                row=all_in_row,
+                column=c.col_idx,
+                value=f"=SUM({cur_col}{all_out_row + 1}:{cur_col}{all_in_row - 1}",
+            )
+            ws.cell(
+                row=balance_row,
+                column=c.col_idx,
+                value=f"={cur_col}{all_in_row} - {cur_col}{all_out_row}",
+            )
 
     for idx, category in enumerate(categories):
         ws.cell(row=(row_category_offset + idx), column=1, value=category)
