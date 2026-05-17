@@ -12,7 +12,7 @@ import conftest
 
 def test_tui_main_snap(snap_compare) -> None:
     """Test visual of the tui."""
-    snap_compare("../easy_account/tui.py")
+    assert snap_compare("../easy_account/tui.py")
 
 
 @mock.patch(
