@@ -70,6 +70,11 @@ class SelectionsCell(VerticalGroup):
             select.disabled = True
             select.clear()
 
+    def update_static(self, name: str, value: str) -> None:
+        """Update the value of a Static."""
+        static = self.screen.query_one(f"#{name}")
+        static.update(value)
+
     @textual.on(Select.Changed, "#sheet")
     def update_menu_from_sheet(self, event):
         self.app.account.active_sheet = event.value
@@ -82,7 +87,11 @@ class SelectionsCell(VerticalGroup):
 
     @textual.on(Select.Changed, "#month")
     def update_fetched_vals_from_month(self, event):
-        print(f"Updating on month event: {event.value}")
+        category = "all-out"
+        month = event.value
+        cell = self.app.account.get_cell(month, category)
+        val = self.app.account.evaluate(cell)
+        self.update_static("spent_value", str(val))
 
 
 class TextInputs(VerticalGroup):
