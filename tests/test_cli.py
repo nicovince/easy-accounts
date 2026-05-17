@@ -471,7 +471,7 @@ class TestCliDefaultReportFromConfig:
 
         easy_account.cli.main()
         captured = capsys.readouterr()
-        assert "4421" in captured.out
+        assert "300" in captured.out
 
     def test_default_report_from_config(self, spreadsheet, capsys, monkeypatch, tmp_path_cwd):
         """Test that default report from config is used when --report not specified."""
@@ -613,7 +613,7 @@ report = "janvier,out-foo"
 
         easy_account.cli.main()
         captured = capsys.readouterr()
-        assert "4421" in captured.out
+        assert "300" in captured.out
 
     def test_default_report_with_omitted_month_uses_current_month(
         self, spreadsheet, capsys, monkeypatch, tmp_path_cwd
@@ -693,7 +693,7 @@ class TestCliShowCmd(TestCli):
 
         easy_account.cli.main()
         captured = capsys.readouterr()
-        assert "4321" in captured.out
+        assert "200" in captured.out
 
     def test_cli_multiple_reports_from_cli(self, spreadsheet, capsys, monkeypatch):
         """Test that multiple --report values work from CLI."""

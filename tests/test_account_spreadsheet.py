@@ -176,6 +176,7 @@ class TestAccountSpreadsheetHelpers:
     def test_get_spreadsheet_users_multiuser(self, multi_account):
         """Test getting users from multiuser spreadsheet."""
         users = multi_account.get_spreadsheet_users()
+        assert ["alice", "bob", "shared"] == users
         assert "alice" in users
         assert "bob" in users
         assert "shared" in users

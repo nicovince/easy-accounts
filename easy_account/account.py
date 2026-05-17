@@ -128,7 +128,7 @@ class AccountSpreadsheet(Spreadsheet):
             List of user names found in the spreadsheet, or empty list if no users.
         """
         ws = self.get_sheet()
-        users: set[str] = set()
+        users: list[str] = list()
         month_columns: set[int] = set()
 
         for cell in ws[self.month_row]:
@@ -151,9 +151,11 @@ class AccountSpreadsheet(Spreadsheet):
                     cell.column in month_columns
                     and cell.value
                     and not isinstance(cell, openpyxl.cell.cell.MergedCell)
+                    and str(cell.value) not in users
                 ):
-                    users.add(str(cell.value))
-        return list(users)
+                    users.append(str(cell.value))
+
+        return users
 
     def is_multiuser(self) -> bool:
         """Check if spreadsheet is multi-user based on merged cells in month row.

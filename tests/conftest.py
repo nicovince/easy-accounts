@@ -114,7 +114,18 @@ def fill_multiuser_sheet(ws):
 
     for idx, category in enumerate(categories):
         ws.cell(row=(row_category_offset + idx), column=1, value=category)
-    ws["C4"] = "=4321"
+    # Janvier / Alice / out-bar
+    ws["B4"] = "=100"
+    # Janvier / Bob / out-bar
+    ws["C4"] = "=200"
+    # Janvier / Shared / out-bar
+    ws["D4"] = "=300"
+    # Janvier / Alice / in-bar
+    ws["B7"] = "=150"
+    # Janvier / Bob / in-bar
+    ws["C7"] = "=220"
+    # Janvier / Shared / in-bar
+    ws["D7"] = "=350"
 
 
 @pytest.fixture
