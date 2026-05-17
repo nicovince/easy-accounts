@@ -290,4 +290,6 @@ async def test_tui_fetched_val_no_cfg(tui_app_nocfg_spreadsheet):
         await menu_select(pilot, app, "sheet", "mono user")
         assert_select_menu(app, "month", False, conftest.get_months(), None)
         await menu_select(pilot, app, "month", "janvier")
+        assert_fetched_val(app, "spent_value", "N/A")
+        assert_fetched_val(app, "income_value", "N/A")
         assert_fetched_val(app, "balance", "N/A")
