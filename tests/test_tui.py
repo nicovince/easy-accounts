@@ -3,6 +3,7 @@ import argparse
 import sys
 import textual
 import pytest
+import logging
 
 from unittest.mock import MagicMock, patch
 from easy_account.tui import EasyAccountTUI
@@ -119,9 +120,9 @@ def default_tui_easy_account_cfg(tmp_path_factory):
     config_path = tmp_path_factory.mktemp("template") / ".easy-account.toml"
     config_content = """
 [tui]
-total_spent_category = "total-out"
-total_income_category = "total-in"
-balance_category = "net"
+total_spent_category = "all-out"
+total_income_category = "all-in"
+balance_category = "balance"
 """
     config_path.write_text(config_content)
     return str(config_path)
@@ -140,6 +141,7 @@ def tui_app_opt_spreadsheet(monkeypatch, default_tui_easy_account_cfg, spreadshe
             spreadsheet_unmodified,
         ],
     )
+    logging.info("Command line: %s", " ".join(sys.argv))
     app = EasyAccountTUI()
     return app
 

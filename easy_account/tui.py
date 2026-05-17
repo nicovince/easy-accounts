@@ -72,7 +72,7 @@ class SelectionsCell(VerticalGroup):
 
     def update_static(self, name: str, value: str) -> None:
         """Update the value of a Static."""
-        static = self.screen.query_one(f"#{name}")
+        static = self.app.screen.query_one(f"#{name}")
         static.update(value)
 
     @textual.on(Select.Changed, "#sheet")
@@ -88,12 +88,14 @@ class SelectionsCell(VerticalGroup):
     @textual.on(Select.Changed, "#month")
     def update_fetched_vals_from_month(self, event):
         month = event.value
+        config = easy_account.config.load_config(self.app.args.config)
+        tui_config = easy_account.config.get_tui_config(config)
         category_widget_links = (
-            ("all-out", "spent_value"),
-            ("all-in", "income_value"),
-            ("balance", "balance"),
+            ("spent_value", tui_config["total_spent_category"]),
+            ("income_value", tui_config["total_income_category"]),
+            ("balance", tui_config["balance_category"]),
         )
-        for category, widget_name in category_widget_links:
+        for widget_name, category in category_widget_links:
             cell = self.app.account.get_cell(month, category)
             val = self.app.account.evaluate(cell)
             self.update_static(widget_name, str(val))
