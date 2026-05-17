@@ -247,3 +247,14 @@ async def test_tui_all_in_value(tui_app_opt_spreadsheet):
         assert_select_menu(app, "month", False, conftest.get_months(), None)
         await menu_select(pilot, app, "month", "fevrier")
         assert_fetched_val(app, "income_value", "111")
+
+
+async def test_tui_balance_value(tui_app_opt_spreadsheet):
+    """Test the balance informational value."""
+    app = tui_app_opt_spreadsheet
+    async with app.run_test(size=(100, 50)) as pilot:
+        assert_select_menu(app, "sheet", False, ["mono user", "multi users"], None)
+        await menu_select(pilot, app, "sheet", "mono user")
+        assert_select_menu(app, "month", False, conftest.get_months(), None)
+        await menu_select(pilot, app, "month", "janvier")
+        assert_fetched_val(app, "balance", "-1000")

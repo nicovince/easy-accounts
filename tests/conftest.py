@@ -71,6 +71,8 @@ def fill_monouser_sheet(ws):
 
     # janvier / out-bar
     ws["B3"] = "=1234"
+    # janvier / in-bar
+    ws["B6"] = "=234"
     # fevrier / in-foo
     ws["C5"] = "=111"
 
