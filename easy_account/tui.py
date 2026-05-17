@@ -87,11 +87,16 @@ class SelectionsCell(VerticalGroup):
 
     @textual.on(Select.Changed, "#month")
     def update_fetched_vals_from_month(self, event):
-        category = "all-out"
         month = event.value
-        cell = self.app.account.get_cell(month, category)
-        val = self.app.account.evaluate(cell)
-        self.update_static("spent_value", str(val))
+        category_widget_links = (
+            ("all-out", "spent_value"),
+            ("all-in", "income_value"),
+            ("balance", "balance"),
+        )
+        for category, widget_name in category_widget_links:
+            cell = self.app.account.get_cell(month, category)
+            val = self.app.account.evaluate(cell)
+            self.update_static(widget_name, str(val))
 
 
 class TextInputs(VerticalGroup):

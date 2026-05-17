@@ -69,7 +69,10 @@ def fill_monouser_sheet(ws):
     for idx, category in enumerate(categories):
         ws.cell(row=(row_category_offset + idx), column=1, value=category)
 
+    # janvier / out-bar
     ws["B3"] = "=1234"
+    # fevrier / in-foo
+    ws["C5"] = "=111"
 
 
 def fill_multiuser_sheet(ws):
