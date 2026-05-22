@@ -85,23 +85,40 @@ class SelectionsCell(VerticalGroup):
         else:
             self.update_options("user", None)
 
-    @textual.on(Select.Changed, "#month")
-    def update_fetched_vals_from_month(self, event):
-        month = event.value
+    def get_widget_category_mapping(self) -> dict:
+        """Read config and get the mapping of widget/category to update the values in widgets."""
         try:
             config = easy_account.config.load_config(self.app.args.config)
         except easy_account.config.ConfigError:
             config = None
 
         tui_config = easy_account.config.get_tui_config(config)
-        category_widget_links = (
+        category_widget_map = (
             ("spent_value", tui_config["total_spent_category"]),
             ("income_value", tui_config["total_income_category"]),
             ("balance", tui_config["balance_category"]),
         )
-        for widget_name, category in category_widget_links:
+        return category_widget_map
+
+    @textual.on(Select.Changed, "#month")
+    def update_fetched_vals_from_month(self, event):
+        month = event.value
+        for widget_name, category in self.get_widget_category_mapping():
             if category and not self.app.account.is_multiuser():
                 cell = self.app.account.get_cell(month, category)
+                val = self.app.account.evaluate(cell)
+            else:
+                val = "N/A"
+            self.update_static(widget_name, str(val))
+
+    @textual.on(Select.Changed, "#user")
+    def update_fetched_vals_on_user_selection(self, event):
+        """Update reports values on user selection in multiuser sheets."""
+        user = event.value
+        month = self.query_one("#month", Select).value
+        for widget_name, category in self.get_widget_category_mapping():
+            if category:
+                cell = self.app.account.get_cell(month, category, user)
                 val = self.app.account.evaluate(cell)
             else:
                 val = "N/A"
