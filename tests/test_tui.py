@@ -348,3 +348,7 @@ async def test_tui_multiuser_fetched_val_user_selected(tui_app_opt_spreadsheet):
         assert_fetched_val(app, "spent_value", "200")
         assert_fetched_val(app, "income_value", "220")
         assert_fetched_val(app, "balance", "20")
+        await menu_select(pilot, app, "user", "shared")
+        assert_fetched_val(app, "spent_value", "300")
+        assert_fetched_val(app, "income_value", "360")
+        assert_fetched_val(app, "balance", "60")

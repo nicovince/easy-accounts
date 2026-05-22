@@ -125,7 +125,7 @@ def fill_multiuser_sheet(ws):
     # Janvier / Bob / in-bar
     ws["C7"] = "=220"
     # Janvier / Shared / in-bar
-    ws["D7"] = "=350"
+    ws["D7"] = "=360"
 
 
 @pytest.fixture
