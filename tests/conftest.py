@@ -127,6 +127,19 @@ def fill_multiuser_sheet(ws):
     # Janvier / Shared / in-bar
     ws["D7"] = "=360"
 
+    # Decembre / Alice / out-foo
+    ws["AF3"] = "=12*100"
+    # Decembre / Bob / out-foo
+    ws["AG3"] = "=12*200"
+    # Decembre / Shared / out-foo
+    ws["AH3"] = "=12*300"
+    # Decembre / Alice / in-foo
+    ws["AF6"] = "=12*101"
+    # Decembre / Bob / in-foo
+    ws["AG6"] = "=12*202"
+    # Decembre / Shared / in-foo
+    ws["AH6"] = "=12*303"
+
 
 @pytest.fixture
 def tmp_path_cwd(tmp_path):
