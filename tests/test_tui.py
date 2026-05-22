@@ -315,13 +315,30 @@ async def test_tui_fetched_val_no_cfg(tui_app_nocfg_spreadsheet):
         assert_fetched_val(app, "balance", "N/A")
 
 
-async def test_tui_multiuser_fetched_val(tui_app_opt_spreadsheet):
-    """Test fetched vals for multiuser sheets."""
+async def test_tui_multiuser_fetched_val_no_user_selected(tui_app_opt_spreadsheet):
+    """Test fetched vals for multiuser sheets.
+
+    Test fetched vals reports N/A when user is not selected yet.
+    """
     app = tui_app_opt_spreadsheet
     async with app.run_test(size=(100, 50)) as pilot:
         assert_select_menu(app, "sheet", False, ["mono user", "multi users"], None)
         await menu_select(pilot, app, "sheet", "multi users")
         assert_select_menu(app, "month", False, conftest.get_months(), None)
+        await menu_select(pilot, app, "month", "janvier")
+        assert_fetched_val(app, "spent_value", "N/A")
+        assert_fetched_val(app, "income_value", "N/A")
+        assert_fetched_val(app, "balance", "N/A")
+
+
+async def test_tui_multiuser_fetched_val_user_selected(tui_app_opt_spreadsheet):
+    """Test fetched vals for multiuser sheets.
+
+    Test fetched vals reports accurate values on user selection
+    """
+    app = tui_app_opt_spreadsheet
+    async with app.run_test(size=(100, 50)) as pilot:
+        await menu_select(pilot, app, "sheet", "multi users")
         await menu_select(pilot, app, "month", "janvier")
         await menu_select(pilot, app, "user", "alice")
         assert_fetched_val(app, "spent_value", "100")

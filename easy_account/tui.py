@@ -100,7 +100,7 @@ class SelectionsCell(VerticalGroup):
             ("balance", tui_config["balance_category"]),
         )
         for widget_name, category in category_widget_links:
-            if category:
+            if category and not self.app.account.is_multiuser():
                 cell = self.app.account.get_cell(month, category)
                 val = self.app.account.evaluate(cell)
             else:
