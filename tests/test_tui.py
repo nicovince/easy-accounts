@@ -2,6 +2,7 @@ from unittest import mock
 import argparse
 import sys
 import textual
+import math
 import pytest
 import logging
 
@@ -26,6 +27,12 @@ async def test_tui_cli_opt(mock_args):
         assert app.args.spreadsheet is None
         assert app.args.config == ".easy-account.toml"
         assert app.SUB_TITLE == "0.2.0"
+
+
+async def pilot_press(pilot: textual.app.App, key: str) -> None:
+    """Log and pilot key."""
+    logging.debug(f"pilot[{key}]")
+    await pilot.press(key)
 
 
 def mock_ik_download_file(drive_id: int, file_id: int, destination: str) -> None:
@@ -78,6 +85,8 @@ def assert_fetched_val(
 
 
 def get_select_index_by_value_name(select, value) -> int:
+    """Get the index of a select option by its value."""
+    logging.debug(f"{select._options}")
     return next(i for i, (p, v) in enumerate(select._options) if v == value)
 
 
@@ -87,16 +96,27 @@ async def menu_select(pilot, app: textual.app.App, select_name: str, value: str)
     assert not select.disabled, f"#{select_name} cannot be disabled."
     option_index = get_select_index_by_value_name(select, value)
     selected_index = get_select_index_by_value_name(select, select.value)
+    logging.info(
+        f"Currently selected {select.value} in #{select_name} select menu at index {selected_index}"
+    )
+    logging.info(f"Selecting {value} in #{select_name} select menu at index {option_index}")
     if selected_index:
-        selected_index -= 1
-    print(f"{selected_index=} {select.value=}")
-    print(f"{option_index=} {value=}")
+        if option_index < selected_index:
+            delta = option_index - selected_index - 1
+        else:
+            delta = option_index - selected_index + 1
+    else:
+        delta = option_index + 1
+    logging.info(f"delta: {delta}")
+
     await pilot.click(f"#{select_name}")
-    for _ in range(selected_index):
-        await pilot.press("up")
-    for _ in range(option_index + 1):
-        await pilot.press("down")
-    await pilot.press("enter")
+    if delta > 0:
+        key = "down"
+    else:
+        key = "up"
+    for _ in range(int(math.fabs(delta))):
+        await pilot_press(pilot, key)
+    await pilot_press(pilot, "enter")
     await pilot.pause()
     assert select.value == value
 
@@ -293,3 +313,21 @@ async def test_tui_fetched_val_no_cfg(tui_app_nocfg_spreadsheet):
         assert_fetched_val(app, "spent_value", "N/A")
         assert_fetched_val(app, "income_value", "N/A")
         assert_fetched_val(app, "balance", "N/A")
+
+
+async def test_tui_multiuser_fetched_val(tui_app_opt_spreadsheet):
+    """Test fetched vals for multiuser sheets."""
+    app = tui_app_opt_spreadsheet
+    async with app.run_test(size=(100, 50)) as pilot:
+        assert_select_menu(app, "sheet", False, ["mono user", "multi users"], None)
+        await menu_select(pilot, app, "sheet", "multi users")
+        assert_select_menu(app, "month", False, conftest.get_months(), None)
+        await menu_select(pilot, app, "month", "janvier")
+        await menu_select(pilot, app, "user", "alice")
+        assert_fetched_val(app, "spent_value", "100")
+        assert_fetched_val(app, "income_value", "150")
+        assert_fetched_val(app, "balance", "50")
+        await menu_select(pilot, app, "user", "bob")
+        assert_fetched_val(app, "spent_value", "200")
+        assert_fetched_val(app, "income_value", "220")
+        assert_fetched_val(app, "balance", "20")
