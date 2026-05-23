@@ -80,25 +80,10 @@ class SelectionsCell(VerticalGroup):
         else:
             self.update_options("user", None)
 
-    def get_widget_category_mapping(self) -> dict:
-        """Read config and get the mapping of widget/category to update the values in widgets."""
-        try:
-            config = easy_account.config.load_config(self.app.args.config)
-        except easy_account.config.ConfigError:
-            config = None
-
-        tui_config = easy_account.config.get_tui_config(config)
-        category_widget_map = (
-            ("spent_value", tui_config["total_spent_category"]),
-            ("income_value", tui_config["total_income_category"]),
-            ("balance", tui_config["balance_category"]),
-        )
-        return category_widget_map
-
     @textual.on(Select.Changed, "#month")
     def update_fetched_vals_from_month(self, event):
         month = event.value
-        for widget_name, category in self.get_widget_category_mapping():
+        for widget_name, category in self.app.screen.get_widget_category_mapping():
             if category and not self.app.account.is_multiuser():
                 cell = self.app.account.get_cell(month, category)
                 val = self.app.account.evaluate(cell)
@@ -111,7 +96,7 @@ class SelectionsCell(VerticalGroup):
         """Update reports values on user selection in multiuser sheets."""
         user = event.value
         month = self.query_one("#month", Select).value
-        for widget_name, category in self.get_widget_category_mapping():
+        for widget_name, category in self.app.screen.get_widget_category_mapping():
             if category:
                 cell = self.app.account.get_cell(month, category, user)
                 val = self.app.account.evaluate(cell)
@@ -162,6 +147,21 @@ class MainScreen(Screen):
         """Update the value of a Static."""
         static = self.app.screen.query_one(f"#{name}")
         static.update(value)
+
+    def get_widget_category_mapping(self) -> dict:
+        """Read config and get the mapping of widget/category to update the values in widgets."""
+        try:
+            config = easy_account.config.load_config(self.app.args.config)
+        except easy_account.config.ConfigError:
+            config = None
+
+        tui_config = easy_account.config.get_tui_config(config)
+        category_widget_map = (
+            ("spent_value", tui_config["total_spent_category"]),
+            ("income_value", tui_config["total_income_category"]),
+            ("balance", tui_config["balance_category"]),
+        )
+        return category_widget_map
 
 
 class EasyAccountTUI(App):
