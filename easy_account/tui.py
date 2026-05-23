@@ -70,11 +70,6 @@ class SelectionsCell(VerticalGroup):
             select.disabled = True
             select.clear()
 
-    def update_static(self, name: str, value: str) -> None:
-        """Update the value of a Static."""
-        static = self.app.screen.query_one(f"#{name}")
-        static.update(value)
-
     @textual.on(Select.Changed, "#sheet")
     def update_menu_from_sheet(self, event):
         self.app.account.active_sheet = event.value
@@ -109,7 +104,7 @@ class SelectionsCell(VerticalGroup):
                 val = self.app.account.evaluate(cell)
             else:
                 val = "N/A"
-            self.update_static(widget_name, str(val))
+            self.app.screen.update_static(widget_name, str(val))
 
     @textual.on(Select.Changed, "#user")
     def update_fetched_vals_on_user_selection(self, event):
@@ -122,7 +117,7 @@ class SelectionsCell(VerticalGroup):
                 val = self.app.account.evaluate(cell)
             else:
                 val = "N/A"
-            self.update_static(widget_name, str(val))
+            self.app.screen.update_static(widget_name, str(val))
 
 
 class TextInputs(VerticalGroup):
@@ -162,6 +157,11 @@ class MainScreen(Screen):
 
     def on_mount(self) -> None:
         self.update_sheet_selection()
+
+    def update_static(self, name: str, value: str) -> None:
+        """Update the value of a Static."""
+        static = self.app.screen.query_one(f"#{name}")
+        static.update(value)
 
 
 class EasyAccountTUI(App):
