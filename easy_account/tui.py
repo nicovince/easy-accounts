@@ -107,8 +107,8 @@ class SelectionsCell(VerticalGroup):
 
 class TextInputs(VerticalGroup):
     def compose(self) -> ComposeResult:
-        yield Input(placeholder="Amount")
-        yield Input(placeholder="Comment")
+        yield Input(placeholder="Amount", id="amount")
+        yield Input(placeholder="Comment", id="comment")
 
 
 class FetchedVals(VerticalGroup):
