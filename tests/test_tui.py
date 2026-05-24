@@ -8,6 +8,7 @@ import logging
 
 from unittest.mock import MagicMock, patch
 from easy_account.tui import EasyAccountTUI
+from easy_account.account import AccountSpreadsheet
 import conftest
 
 
@@ -369,3 +370,45 @@ class TestTuiDisplayedValues:
             self.assert_all_fetched_val(app, "2400", "2424", "24")
             await menu_select(pilot, app, "user", "shared")
             self.assert_all_fetched_val(app, "3600", "3636", "36")
+
+
+class TestTuiNewEntry:
+    """Test modifications of files by using the amount/comment/validate widgets."""
+
+    @pytest.fixture
+    def app(self, monkeypatch, simple_tui_easy_account_cfg, spreadsheet):
+        """Launch app with a default config file."""
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "easy-account-tui",
+                "-c",
+                simple_tui_easy_account_cfg,
+                "-f",
+                spreadsheet,
+            ],
+        )
+        return launch_app()
+
+    async def modify_input(self, pilot: textual.app.App, name: str, value: str):
+        """Modify an Input widget with the requested value."""
+        await pilot.click(f"#{name}")
+        await pilot.press(*[c for c in value])
+
+    async def validate(self, pilot: textual.app.App):
+        """Click the Validate button."""
+        await pilot.click("#confirm")
+
+    async def test_tui_add_new_entry(self, app, spreadsheet):
+        async with app.run_test(size=(100, 50)) as pilot:
+            await menu_select(pilot, app, "sheet", "mono user")
+            await menu_select(pilot, app, "month", "janvier")
+            await menu_select(pilot, app, "category", "out-foo")
+            await self.modify_input(pilot, "amount", "15")
+            await self.validate(pilot)
+
+        account = AccountSpreadsheet(spreadsheet)
+        account.active_sheet = "mono user"
+        c = account.get_cell(month="janvier", category="out-foo")
+        assert c.value == "=15"
