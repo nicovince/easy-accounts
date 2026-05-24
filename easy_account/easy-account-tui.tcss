@@ -21,6 +21,11 @@ Screen {
     grid-size: 3 1;
 }
 
+#user-inputs {
+    layout: grid;
+    grid-size: 3 1;
+}
+
 .box {
     border: solid green;
 }

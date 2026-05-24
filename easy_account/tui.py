@@ -1,5 +1,5 @@
 from textual.app import App, ComposeResult
-from textual.containers import VerticalGroup
+from textual.containers import VerticalGroup, HorizontalGroup
 from textual.widgets import Button, Footer, Header, Input, Static, Select
 from textual.screen import Screen
 from textual.widget import Widget
@@ -105,10 +105,11 @@ class SelectionsCell(VerticalGroup):
             self.app.screen.update_static(widget_name, str(val))
 
 
-class TextInputs(VerticalGroup):
+class TextInputs(HorizontalGroup):
     def compose(self) -> ComposeResult:
         yield Input(placeholder="Amount", id="amount")
         yield Input(placeholder="Comment", id="comment")
+        yield Button("Confirm", id="confirm", classes="box")
 
 
 class FetchedVals(VerticalGroup):
