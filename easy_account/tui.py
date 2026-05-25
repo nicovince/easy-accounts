@@ -118,11 +118,10 @@ class TextInputs(HorizontalGroup):
         user = None
         if self.app.account.is_multiuser():
             user = self.app.screen.query_one("#user", Select).value
-        amount = self.app.screen.query_one("#amount", Input).value
-        if amount.isdecimal():
-            amount = int(amount)
-        else:
-            amount = float(amount)
+        amount_str = self.app.screen.query_one("#amount", Input).value
+        parts = amount_str.split()
+        amounts = [int(p) if p.isdecimal() else float(p) for p in parts]
+        amount = amounts[0] if len(amounts) == 1 else amounts
 
         comment = self.app.screen.query_one("#comment", Input).value
         if comment == "":
