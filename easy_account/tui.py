@@ -119,11 +119,14 @@ class TextInputs(HorizontalGroup):
         if self.app.account.is_multiuser():
             user = self.app.screen.query_one("#user", Select).value
         amount = self.app.screen.query_one("#amount", Input).value
-        comment = self.app.screen.query_one("#comment", Input).value
         if amount.isdecimal():
             amount = int(amount)
         else:
             amount = float(amount)
+
+        comment = self.app.screen.query_one("#comment", Input).value
+        if comment == "":
+            comment = None
 
         self.app.account.add_entry(
             month=month, category=category, amount=amount, comment=comment, user=user
