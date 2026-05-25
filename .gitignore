@@ -67,3 +67,6 @@ env/
 dmypy.json
 
 .pre-commit/
+
+# ctags
+tags
