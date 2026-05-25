@@ -9,6 +9,7 @@ import logging
 from unittest.mock import MagicMock, patch
 from easy_account.tui import EasyAccountTUI
 from easy_account.account import AccountSpreadsheet
+from textual.widgets import Input
 import conftest
 
 
@@ -402,15 +403,184 @@ class TestTuiNewEntry:
         """Click the Validate button."""
         await pilot.click("#confirm")
 
+    async def fill_new_entry(
+        self,
+        pilot: textual.app.App,
+        sheet: str,
+        month: str,
+        category: str,
+        amount: str,
+        comment: str | None = None,
+        user: str | None = None,
+    ):
+        """Fill and submit a new entry form."""
+        await menu_select(pilot, pilot.app, "sheet", sheet)
+        await menu_select(pilot, pilot.app, "month", month)
+        await menu_select(pilot, pilot.app, "category", category)
+        if user:
+            await menu_select(pilot, pilot.app, "user", user)
+        await self.modify_input(pilot, "amount", amount)
+        if comment is not None:
+            await self.modify_input(pilot, "comment", comment)
+        await self.validate(pilot)
+
+    def assert_cell(
+        self,
+        spreadsheet: str,
+        sheet: str,
+        month: str,
+        category: str,
+        expected_value: str,
+        expected_comment: str | None = None,
+        user: str | None = None,
+    ):
+        """Assert the value and comment of a cell."""
+        account = AccountSpreadsheet(spreadsheet)
+        account.active_sheet = sheet
+        c = account.get_cell(month=month, category=category, user=user)
+        assert c.value == expected_value
+        if expected_comment is not None:
+            assert c.comment is not None
+            assert c.comment.text == expected_comment
+        else:
+            assert c.comment is None
+
     async def test_tui_add_new_entry(self, app, spreadsheet):
+        """Test adding a new entry with an amount."""
+        async with app.run_test(size=(100, 50)) as pilot:
+            await self.fill_new_entry(
+                pilot,
+                "mono user",
+                "janvier",
+                "out-foo",
+                "15",
+            )
+        self.assert_cell(
+            spreadsheet,
+            "mono user",
+            "janvier",
+            "out-foo",
+            "=15",
+        )
+
+    async def test_tui_add_new_entry_with_comment(self, app, spreadsheet):
+        """Test adding a new entry with an amount and a comment."""
+        async with app.run_test(size=(100, 50)) as pilot:
+            await self.fill_new_entry(
+                pilot,
+                "mono user",
+                "janvier",
+                "out-foo",
+                "15",
+                comment="test comment",
+            )
+        self.assert_cell(
+            spreadsheet,
+            "mono user",
+            "janvier",
+            "out-foo",
+            "=15",
+            expected_comment="test comment",
+        )
+
+    async def test_tui_add_new_entry_negative_amount(self, app, spreadsheet):
+        """Test adding a negative amount produces a float cell value."""
+        async with app.run_test(size=(100, 50)) as pilot:
+            await self.fill_new_entry(
+                pilot,
+                "mono user",
+                "janvier",
+                "out-foo",
+                "-15",
+            )
+        self.assert_cell(
+            spreadsheet,
+            "mono user",
+            "janvier",
+            "out-foo",
+            "=-15.0",
+        )
+
+    async def test_tui_add_new_entry_append(self, app, spreadsheet):
+        """Test appending an amount to an existing cell formula."""
+        async with app.run_test(size=(100, 50)) as pilot:
+            await self.fill_new_entry(
+                pilot,
+                "mono user",
+                "janvier",
+                "out-bar",
+                "5",
+            )
+        self.assert_cell(
+            spreadsheet,
+            "mono user",
+            "janvier",
+            "out-bar",
+            "=1234 + 5",
+        )
+
+    async def test_tui_add_new_entry_append_comment(self, app, spreadsheet):
+        """Test appending a comment to an existing cell comment."""
+        async with app.run_test(size=(100, 50)) as pilot:
+            await self.fill_new_entry(
+                pilot,
+                "mono user",
+                "janvier",
+                "out-foo",
+                "10",
+                comment="first comment",
+            )
+        app2 = launch_app()
+        async with app2.run_test(size=(100, 50)) as pilot:
+            await menu_select(pilot, app2, "sheet", "mono user")
+            await menu_select(pilot, app2, "month", "janvier")
+            await menu_select(pilot, app2, "category", "out-foo")
+            await self.modify_input(pilot, "amount", "20")
+            await self.modify_input(pilot, "comment", "second comment")
+            await self.validate(pilot)
+        self.assert_cell(
+            spreadsheet,
+            "mono user",
+            "janvier",
+            "out-foo",
+            "=10 + 20",
+            expected_comment="first comment\nsecond comment",
+        )
+
+    async def test_tui_add_new_entry_multiuser_comment(self, app, spreadsheet):
+        """Test adding an entry with a comment on a multi-user sheet."""
+        async with app.run_test(size=(100, 50)) as pilot:
+            await self.fill_new_entry(
+                pilot,
+                "multi users",
+                "janvier",
+                "out-foo",
+                "50",
+                comment="alice entry",
+                user="alice",
+            )
+        self.assert_cell(
+            spreadsheet,
+            "multi users",
+            "janvier",
+            "out-foo",
+            "=50",
+            expected_comment="alice entry",
+            user="alice",
+        )
+
+    async def test_tui_add_new_entry_multi_amount(self, app, spreadsheet):
+        """Test that space-separated amounts in the input fail to parse (known bug)."""
         async with app.run_test(size=(100, 50)) as pilot:
             await menu_select(pilot, app, "sheet", "mono user")
             await menu_select(pilot, app, "month", "janvier")
             await menu_select(pilot, app, "category", "out-foo")
-            await self.modify_input(pilot, "amount", "15")
+            app.screen.query_one("#amount", Input).value = "15 20"
             await self.validate(pilot)
-
-        account = AccountSpreadsheet(spreadsheet)
-        account.active_sheet = "mono user"
-        c = account.get_cell(month="janvier", category="out-foo")
-        assert c.value == "=15"
+        self.assert_cell(
+            spreadsheet,
+            "mono user",
+            "janvier",
+            "out-foo",
+            "=15 + 20",
+        )
