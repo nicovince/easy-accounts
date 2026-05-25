@@ -395,6 +395,8 @@ class TestTuiNewEntry:
         """Modify an Input widget with the requested value."""
         await pilot.click(f"#{name}")
         await pilot.press(*[c for c in value])
+        widget = pilot.app.screen.query_one(f"#{name}")
+        assert widget.value == value
 
     async def validate(self, pilot: textual.app.App):
         """Click the Validate button."""
