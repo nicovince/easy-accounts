@@ -107,9 +107,28 @@ class SelectionsCell(VerticalGroup):
 
 class TextInputs(HorizontalGroup):
     def compose(self) -> ComposeResult:
-        yield Input(placeholder="Amount", id="amount")
+        yield Input(placeholder="Amount", id="amount", type="number")
         yield Input(placeholder="Comment", id="comment")
         yield Button("Confirm", id="confirm", classes="box")
+
+    @textual.on(Button.Pressed, "#confirm")
+    def confirm_pressed(self, event: Button.Pressed) -> None:
+        month = self.app.screen.query_one("#month", Select).value
+        category = self.app.screen.query_one("#category", Select).value
+        user = None
+        if self.app.account.is_multiuser():
+            user = self.app.screen.query_one("#user", Select).value
+        amount = self.app.screen.query_one("#amount", Input).value
+        comment = self.app.screen.query_one("#comment", Input).value
+        if amount.isdecimal():
+            amount = int(amount)
+        else:
+            amount = float(amount)
+
+        self.app.account.add_entry(
+            month=month, category=category, amount=amount, comment=comment, user=user
+        )
+        self.app.account.save()
 
 
 class FetchedVals(VerticalGroup):
