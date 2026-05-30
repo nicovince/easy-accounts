@@ -260,8 +260,8 @@ class TestTuiSelect:
 class TestTuiDisplayedValues:
     """Test values displayed in Static Widgets."""
 
+    @staticmethod
     def assert_fetched_val(
-        self,
         app: textual.app.App,
         fetched_name: str,
         value: str,
@@ -275,17 +275,18 @@ class TestTuiDisplayedValues:
         fetched_widget = app.screen.query_one(f"#{fetched_name}")
         assert fetched_widget.content == value
 
+    @classmethod
     def assert_all_fetched_val(
-        self,
+        cls,
         app: textual.app.App,
         spent: str,
         income: str,
         balance: str,
     ) -> None:
         """Verify all displayed values."""
-        self.assert_fetched_val(app, "spent_value", spent)
-        self.assert_fetched_val(app, "income_value", income)
-        self.assert_fetched_val(app, "balance", balance)
+        cls.assert_fetched_val(app, "spent_value", spent)
+        cls.assert_fetched_val(app, "income_value", income)
+        cls.assert_fetched_val(app, "balance", balance)
 
     async def test_tui_all_out_value(self, tui_app_opt_spreadsheet):
         """Test the all out informational value."""
@@ -584,3 +585,49 @@ class TestTuiNewEntry:
             "out-foo",
             "=15 + 20",
         )
+
+    async def test_tui_fetched_val_updates_after_confirm_spent(self, app, spreadsheet):
+        """Test FetchedVals update after confirming a new expense entry."""
+        async with app.run_test(size=(100, 50)) as pilot:
+            await menu_select(pilot, app, "sheet", "mono user")
+            await menu_select(pilot, app, "month", "janvier")
+            await menu_select(pilot, app, "category", "out-foo")
+
+            TestTuiDisplayedValues.assert_all_fetched_val(app, "1234", "234", "-1000")
+
+            await self.modify_input(pilot, "amount", "15")
+            await self.validate(pilot)
+            await pilot.pause()
+
+            TestTuiDisplayedValues.assert_all_fetched_val(app, "1249", "234", "-1015")
+
+    async def test_tui_fetched_val_updates_after_confirm_income(self, app, spreadsheet):
+        """Test FetchedVals update after confirming a new income entry."""
+        async with app.run_test(size=(100, 50)) as pilot:
+            await menu_select(pilot, app, "sheet", "mono user")
+            await menu_select(pilot, app, "month", "fevrier")
+            await menu_select(pilot, app, "category", "in-foo")
+
+            TestTuiDisplayedValues.assert_all_fetched_val(app, "0", "111", "111")
+
+            await self.modify_input(pilot, "amount", "50")
+            await self.validate(pilot)
+            await pilot.pause()
+
+            TestTuiDisplayedValues.assert_all_fetched_val(app, "0", "161", "161")
+
+    async def test_tui_fetched_val_updates_after_confirm_multiuser(self, app, spreadsheet):
+        """Test FetchedVals update after confirming on a multiuser sheet."""
+        async with app.run_test(size=(100, 50)) as pilot:
+            await menu_select(pilot, app, "sheet", "multi users")
+            await menu_select(pilot, app, "month", "janvier")
+            await menu_select(pilot, app, "user", "alice")
+            await menu_select(pilot, app, "category", "out-foo")
+
+            TestTuiDisplayedValues.assert_all_fetched_val(app, "100", "150", "50")
+
+            await self.modify_input(pilot, "amount", "25")
+            await self.validate(pilot)
+            await pilot.pause()
+
+            TestTuiDisplayedValues.assert_all_fetched_val(app, "125", "150", "25")

@@ -131,6 +131,7 @@ class TextInputs(HorizontalGroup):
             month=month, category=category, amount=amount, comment=comment, user=user
         )
         self.app.account.save()
+        self.app.screen.refresh_fetched_vals()
 
 
 class FetchedVals(VerticalGroup):
@@ -184,6 +185,29 @@ class MainScreen(Screen):
             ("balance", tui_config["balance_category"]),
         )
         return category_widget_map
+
+    def refresh_fetched_vals(self) -> None:
+        """Refresh the fetched values based on current selections."""
+        month = self.query_one("#month", Select).value
+        if not month:
+            return
+        user = self.query_one("#user", Select).value
+        if user and self.app.account.is_multiuser():
+            for widget_name, category in self.get_widget_category_mapping():
+                if category:
+                    cell = self.app.account.get_cell(month, category, user)
+                    val = self.app.account.evaluate(cell)
+                else:
+                    val = "N/A"
+                self.update_static(widget_name, str(val))
+        else:
+            for widget_name, category in self.get_widget_category_mapping():
+                if category and not self.app.account.is_multiuser():
+                    cell = self.app.account.get_cell(month, category)
+                    val = self.app.account.evaluate(cell)
+                else:
+                    val = "N/A"
+                self.update_static(widget_name, str(val))
 
 
 class EasyAccountTUI(App):
