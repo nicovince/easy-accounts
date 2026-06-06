@@ -1,4 +1,4 @@
-Screen {
+MainScreen {
     layout: grid;
     grid-size: 2 3;
     grid-columns: auto 1fr;
@@ -6,22 +6,22 @@ Screen {
     grid-gutter: 1;
 }
 
-#fetched-vals {
+MainScreen #fetched-vals {
     layout: grid;
     grid-size: 2 3;
 }
 
-#user-inputs {
+MainScreen #user-inputs {
     row-span: 2;
 }
 
-#buttons {
+MainScreen #buttons {
     column-span: 2;
     layout: grid;
     grid-size: 3 1;
 }
 
-#user-inputs {
+MainScreen #user-inputs {
     layout: grid;
     grid-size: 3 1;
 }
@@ -32,4 +32,27 @@ Screen {
 
 .value {
     text-align: right;
+}
+
+TokenInputScreen {
+    align: center middle;
+}
+TokenInputScreen VerticalGroup {
+    width: 60;
+    padding: 2;
+}
+TokenInputScreen #token-input {
+    margin: 1 0;
+}
+TokenInputScreen HorizontalGroup {
+    height: auto;
+    width: 100%;
+    align: center middle;
+}
+TokenInputScreen Button {
+    margin: 1 1;
+}
+TokenInputScreen #error-msg {
+    color: $error;
+    margin: 1 0;
 }

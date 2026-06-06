@@ -208,7 +208,7 @@ class InfomaniakApi:
             )
 
 
-def pull_file(url: str) -> str:
+def pull_file(url: str, api: InfomaniakApi | None = None) -> str:
     parsed = url.rstrip("/").split("/")
     try:
         drive_id = int(parsed[-3])
@@ -221,7 +221,8 @@ def pull_file(url: str) -> str:
         )
         raise InfomaniakInvalidApiUrl(f"Invalid Infomaniak API URL: {url}")
 
-    api = InfomaniakApi()
+    if api is None:
+        api = InfomaniakApi()
     file_info = api.get_file_info(drive_id, file_id)
     destination = Path(file_info.name)
 

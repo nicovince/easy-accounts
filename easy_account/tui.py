@@ -8,7 +8,7 @@ import easy_account.config as ea_config
 import importlib.metadata
 import argparse
 import easy_account.infomaniak
-from easy_account.infomaniak import InfomaniakApi
+from easy_account.infomaniak import InfomaniakApi, MissingTokenError
 from easy_account.account import AccountSpreadsheet
 
 
@@ -21,12 +21,55 @@ class Buttons(VerticalGroup):
     @textual.on(Button.Pressed, "#pull")
     def pull_file(self) -> None:
         """Action executed on pull."""
+        if self.app.api is None:
+            self.app.push_screen(TokenInputScreen(), self._on_token_provided)
+        else:
+            self._do_pull()
+
+    def _on_token_provided(self, token: str | None) -> None:
+        if token is not None:
+            self.app.api = InfomaniakApi(token)
+            self._do_pull()
+
+    def _do_pull(self) -> None:
         config = easy_account.config.load_config(self.app.args.config)
         api_url = easy_account.config.get_kdrive_api_url(config)
         assert api_url is not None
-        self.app.args.spreadsheet = easy_account.infomaniak.pull_file(api_url)
+        self.app.args.spreadsheet = easy_account.infomaniak.pull_file(api_url, api=self.app.api)
         self.app.account = AccountSpreadsheet(self.app.args.spreadsheet)
         self.screen.update_sheet_selection()
+
+
+class TokenInputScreen(Screen):
+    """Screen for entering Infomaniak API token when IK_TOKEN is not set."""
+
+    def compose(self) -> ComposeResult:
+        yield VerticalGroup(
+            Static("IK_TOKEN environment variable not set.", id="token-msg"),
+            Static("Enter your Infomaniak API token below to proceed with the pull:"),
+            Input(
+                placeholder="Paste your token here",
+                id="token-input",
+                password=True,
+            ),
+            Static("", id="error-msg"),
+            HorizontalGroup(
+                Button("Submit", id="submit-token", variant="primary"),
+                Button("Cancel", id="cancel-token"),
+            ),
+        )
+
+    @textual.on(Button.Pressed, "#submit-token")
+    def submit_token(self) -> None:
+        token = self.query_one("#token-input", Input).value
+        if not token.strip():
+            self.query_one("#error-msg", Static).update("Token cannot be empty.")
+            return
+        self.dismiss(token.strip())
+
+    @textual.on(Button.Pressed, "#cancel-token")
+    def cancel_token(self) -> None:
+        self.dismiss(None)
 
 
 class CellSelector(Widget):
@@ -256,8 +299,8 @@ class EasyAccountTUI(App):
 
         try:
             self.api = InfomaniakApi()
-        except easy_account.infomaniak.MissingTokenError:
-            self.api = InfomaniakApi("DUMMY_TOKEN")
+        except MissingTokenError:
+            self.api = None
         super().__init__()
 
     def on_mount(self) -> None:
