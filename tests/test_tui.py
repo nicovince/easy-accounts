@@ -7,9 +7,9 @@ import pytest
 import logging
 
 from unittest.mock import MagicMock, patch
-from easy_account.tui import EasyAccountTUI
+from easy_account.tui import EasyAccountTUI, TokenInputScreen, MainScreen
 from easy_account.account import AccountSpreadsheet
-from textual.widgets import Input
+from textual.widgets import Input, Static
 import conftest
 
 
@@ -205,13 +205,79 @@ api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
     with patch.object(sys, "argv", []):
         app = EasyAccountTUI()
     async with app.run_test() as pilot:
-        with patch("easy_account.infomaniak.InfomaniakApi") as InfomaniakApiMock:
+        with (
+            patch.object(app.api, "get_file_info", return_value=mock_file_info),
+            patch.object(app.api, "download_file", side_effect=mock_ik_download_file),
+        ):
+            await pilot.click("#pull")
+            app.api.get_file_info.assert_called_once_with(3615, 1234)
+            app.api.download_file.assert_called_once()
+            assert app.args.spreadsheet == mock_file_info.name
+            assert_select_menu(app, "sheet", False, ["mono user", "multi users"], None)
+            assert_select_menu(app, "month", True)
+            assert_select_menu(app, "category", True)
+            assert_select_menu(app, "user", True)
+
+
+async def test_tui_pull_no_token_shows_token_screen(monkeypatch, tmp_path_cwd):
+    """Verify TokenInputScreen is shown when IK_TOKEN is not set."""
+    config_path = tmp_path_cwd / ".easy-account.toml"
+    config_content = """
+[kdrive]
+api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
+"""
+    config_path.write_text(config_content)
+    monkeypatch.delenv("IK_TOKEN", raising=False)
+
+    with patch.object(sys, "argv", []):
+        app = EasyAccountTUI()
+    assert app.api is None
+
+    async with app.run_test() as pilot:
+        await pilot.click("#pull")
+        await pilot.pause()
+
+        assert isinstance(app.screen, TokenInputScreen)
+        assert app.screen.query_one("#token-input")
+        assert app.screen.query_one("#submit-token")
+        assert app.screen.query_one("#cancel-token")
+        assert app.screen.query_one("#token-msg")
+
+
+async def test_tui_pull_token_screen_submit_token(monkeypatch, tmp_path_cwd):
+    """Verify entering a token on TokenInputScreen creates the api and proceeds with pull."""
+    config_path = tmp_path_cwd / ".easy-account.toml"
+    config_content = """
+[kdrive]
+api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
+"""
+    config_path.write_text(config_content)
+    monkeypatch.delenv("IK_TOKEN", raising=False)
+
+    mock_file_info = MagicMock()
+    mock_file_info.name = "test.xlsx"
+
+    with patch.object(sys, "argv", []):
+        app = EasyAccountTUI()
+    assert app.api is None
+
+    async with app.run_test() as pilot:
+        await pilot.click("#pull")
+        await pilot.pause()
+        assert isinstance(app.screen, TokenInputScreen)
+
+        with patch("easy_account.tui.InfomaniakApi") as InfomaniakApiMock:
             ik_api_mock = MagicMock()
             ik_api_mock.get_file_info.return_value = mock_file_info
             ik_api_mock.download_file.side_effect = mock_ik_download_file
             InfomaniakApiMock.return_value = ik_api_mock
 
-            await pilot.click("#pull")
+            app.screen.query_one("#token-input", Input).value = "my_test_token"
+            await pilot.click("#submit-token")
+            await pilot.pause()
+            await pilot.pause()
+
+            InfomaniakApiMock.assert_called_once_with("my_test_token")
             ik_api_mock.get_file_info.assert_called_once_with(3615, 1234)
             ik_api_mock.download_file.assert_called_once()
             assert app.args.spreadsheet == mock_file_info.name
@@ -219,6 +285,64 @@ api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
             assert_select_menu(app, "month", True)
             assert_select_menu(app, "category", True)
             assert_select_menu(app, "user", True)
+
+
+async def test_tui_pull_token_screen_empty_token(monkeypatch, tmp_path_cwd):
+    """Verify submitting an empty token shows error and stays on the token screen."""
+    config_path = tmp_path_cwd / ".easy-account.toml"
+    config_content = """
+[kdrive]
+api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
+"""
+    config_path.write_text(config_content)
+    monkeypatch.delenv("IK_TOKEN", raising=False)
+
+    with patch.object(sys, "argv", []):
+        app = EasyAccountTUI()
+    assert app.api is None
+
+    async with app.run_test() as pilot:
+        await pilot.click("#pull")
+        await pilot.pause()
+        assert isinstance(app.screen, TokenInputScreen)
+
+        await pilot.click("#submit-token")
+        await pilot.pause()
+
+        error_static = app.screen.query_one("#error-msg", Static)
+        assert error_static.content == "Token cannot be empty."
+        assert isinstance(app.screen, TokenInputScreen)
+
+
+async def test_tui_pull_token_screen_cancel(monkeypatch, tmp_path_cwd):
+    """Verify cancel on TokenInputScreen returns to main screen without pulling."""
+    config_path = tmp_path_cwd / ".easy-account.toml"
+    config_content = """
+[kdrive]
+api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
+"""
+    config_path.write_text(config_content)
+    monkeypatch.delenv("IK_TOKEN", raising=False)
+
+    with patch.object(sys, "argv", []):
+        app = EasyAccountTUI()
+    assert app.api is None
+
+    async with app.run_test() as pilot:
+        await pilot.click("#pull")
+        await pilot.pause()
+        assert isinstance(app.screen, TokenInputScreen)
+
+        cancel_btn = app.screen.query_one("#cancel-token")
+        cancel_btn.focus()
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+
+        assert isinstance(
+            app.screen, MainScreen
+        ), f"Expected MainScreen but got {type(app.screen).__name__}"
+        assert app.api is None
 
 
 class TestTuiSelect:
