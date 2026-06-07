@@ -104,6 +104,24 @@ class InfomaniakApi:
             )
         return response.json()
 
+    def url_to_file_info(self, api_url: str) -> FileInfo:
+        """Convert API url to FileInfo
+
+        Args:
+            api_url: The Infomaniak API of the file
+
+        Returns:
+            FileInfo object with file metadata.
+        """
+        parsed = api_url.rstrip("/").split("/")
+        try:
+            drive_id = int(parsed[-3])
+            file_id = int(parsed[-1])
+        except (IndexError, ValueError):
+            raise InfomaniakInvalidApiUrl(f"Invalid Infomaniak API URL: {api_url}")
+
+        return self.get_file_info(drive_id, file_id)
+
     def get_file_info(self, drive_id: int, file_id: int) -> FileInfo:
         """Get information about a file.
 

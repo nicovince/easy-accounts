@@ -7,6 +7,7 @@ import textual
 import easy_account.config as ea_config
 import importlib.metadata
 import argparse
+from pathlib import Path
 import easy_account.infomaniak
 from easy_account.infomaniak import InfomaniakApi, MissingTokenError
 from easy_account.account import AccountSpreadsheet
@@ -22,11 +23,11 @@ class Buttons(VerticalGroup):
     def pull_file(self) -> None:
         """Action executed on pull."""
         if self.app.api is None:
-            self.app.push_screen(TokenInputScreen(), self._on_token_provided)
+            self.app.push_screen(TokenInputScreen(), self._on_pull_token_provided)
         else:
             self._do_pull()
 
-    def _on_token_provided(self, token: str | None) -> None:
+    def _on_pull_token_provided(self, token: str | None) -> None:
         if token is not None:
             self.app.api = InfomaniakApi(token)
             self._do_pull()
@@ -38,6 +39,27 @@ class Buttons(VerticalGroup):
         self.app.args.spreadsheet = easy_account.infomaniak.pull_file(api_url, api=self.app.api)
         self.app.account = AccountSpreadsheet(self.app.args.spreadsheet)
         self.screen.update_sheet_selection()
+
+    @textual.on(Button.Pressed, "#push")
+    def push_file(self) -> None:
+        """Action executed on push."""
+        if self.app.api is None:
+            self.app.push_screen(TokenInputScreen(), self._on_push_token_provided)
+        else:
+            self._do_push()
+
+    def _on_push_token_provided(self, token: str | None) -> None:
+        if token is not None:
+            self.app.api = InfomaniakApi(token)
+            self._do_push()
+
+    def _do_push(self) -> None:
+        config = easy_account.config.load_config(self.app.args.config)
+        api_url = easy_account.config.get_kdrive_api_url(config)
+        assert api_url is not None
+        file_info = self.app.api.url_to_file_info(api_url)
+        local_file = Path(file_info.name)
+        self.app.api.upload_file(file_info.drive_id, file_info.file_id, local_file)
 
 
 class TokenInputScreen(Screen):

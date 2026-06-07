@@ -6,6 +6,7 @@ import math
 import pytest
 import logging
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 from easy_account.tui import EasyAccountTUI, TokenInputScreen, MainScreen
 from easy_account.account import AccountSpreadsheet
@@ -755,3 +756,143 @@ class TestTuiNewEntry:
             await pilot.pause()
 
             TestTuiDisplayedValues.assert_all_fetched_val(app, "125", "150", "25")
+
+
+class TestTuiPush:
+    """Test the push button functionality."""
+
+    CONFIG_CONTENT = """
+[kdrive]
+api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
+"""
+
+    async def test_tui_push(self, monkeypatch, tmp_path_cwd):
+        """Test push with token set.
+
+        Verify that url_to_file_info and upload_file are called on the API.
+        """
+        config_path = tmp_path_cwd / ".easy-account.toml"
+        config_path.write_text(self.CONFIG_CONTENT)
+        monkeypatch.setenv("IK_TOKEN", "test_token")
+
+        mock_file_info = MagicMock()
+        mock_file_info.name = "test.xlsx"
+        mock_file_info.drive_id = 3615
+        mock_file_info.file_id = 1234
+
+        with patch.object(sys, "argv", []):
+            app = EasyAccountTUI()
+        async with app.run_test() as pilot:
+            with (
+                patch.object(app.api, "url_to_file_info", return_value=mock_file_info),
+                patch.object(app.api, "upload_file"),
+            ):
+                await pilot.click("#push")
+                app.api.url_to_file_info.assert_called_once_with(
+                    "https://api.infomaniak.com/2/drive/3615/files/1234"
+                )
+                app.api.upload_file.assert_called_once_with(3615, 1234, Path("test.xlsx"))
+
+    async def test_tui_push_no_token_shows_token_screen(self, monkeypatch, tmp_path_cwd):
+        """Verify TokenInputScreen is shown when IK_TOKEN is not set."""
+        config_path = tmp_path_cwd / ".easy-account.toml"
+        config_path.write_text(self.CONFIG_CONTENT)
+        monkeypatch.delenv("IK_TOKEN", raising=False)
+
+        with patch.object(sys, "argv", []):
+            app = EasyAccountTUI()
+        assert app.api is None
+
+        async with app.run_test() as pilot:
+            await pilot.click("#push")
+            await pilot.pause()
+
+            assert isinstance(app.screen, TokenInputScreen)
+            assert app.screen.query_one("#token-input")
+            assert app.screen.query_one("#submit-token")
+            assert app.screen.query_one("#cancel-token")
+            assert app.screen.query_one("#token-msg")
+
+    async def test_tui_push_token_screen_submit_token(self, monkeypatch, tmp_path_cwd):
+        """Verify entering a token on TokenInputScreen creates the api and proceeds with push."""
+        config_path = tmp_path_cwd / ".easy-account.toml"
+        config_path.write_text(self.CONFIG_CONTENT)
+        monkeypatch.delenv("IK_TOKEN", raising=False)
+
+        mock_file_info = MagicMock()
+        mock_file_info.name = "test.xlsx"
+        mock_file_info.drive_id = 3615
+        mock_file_info.file_id = 1234
+
+        with patch.object(sys, "argv", []):
+            app = EasyAccountTUI()
+        assert app.api is None
+
+        async with app.run_test() as pilot:
+            await pilot.click("#push")
+            await pilot.pause()
+            assert isinstance(app.screen, TokenInputScreen)
+
+            with patch("easy_account.tui.InfomaniakApi") as InfomaniakApiMock:
+                ik_api_mock = MagicMock()
+                ik_api_mock.url_to_file_info.return_value = mock_file_info
+                InfomaniakApiMock.return_value = ik_api_mock
+
+                app.screen.query_one("#token-input", Input).value = "my_test_token"
+                await pilot.click("#submit-token")
+                await pilot.pause()
+                await pilot.pause()
+
+                InfomaniakApiMock.assert_called_once_with("my_test_token")
+                ik_api_mock.url_to_file_info.assert_called_once_with(
+                    "https://api.infomaniak.com/2/drive/3615/files/1234"
+                )
+                ik_api_mock.upload_file.assert_called_once_with(3615, 1234, Path("test.xlsx"))
+
+    async def test_tui_push_token_screen_empty_token(self, monkeypatch, tmp_path_cwd):
+        """Verify submitting an empty token shows error and stays on the token screen."""
+        config_path = tmp_path_cwd / ".easy-account.toml"
+        config_path.write_text(self.CONFIG_CONTENT)
+        monkeypatch.delenv("IK_TOKEN", raising=False)
+
+        with patch.object(sys, "argv", []):
+            app = EasyAccountTUI()
+        assert app.api is None
+
+        async with app.run_test() as pilot:
+            await pilot.click("#push")
+            await pilot.pause()
+            assert isinstance(app.screen, TokenInputScreen)
+
+            await pilot.click("#submit-token")
+            await pilot.pause()
+
+            error_static = app.screen.query_one("#error-msg", Static)
+            assert error_static.content == "Token cannot be empty."
+            assert isinstance(app.screen, TokenInputScreen)
+
+    async def test_tui_push_token_screen_cancel(self, monkeypatch, tmp_path_cwd):
+        """Verify cancel on TokenInputScreen returns to main screen without pushing."""
+        config_path = tmp_path_cwd / ".easy-account.toml"
+        config_path.write_text(self.CONFIG_CONTENT)
+        monkeypatch.delenv("IK_TOKEN", raising=False)
+
+        with patch.object(sys, "argv", []):
+            app = EasyAccountTUI()
+        assert app.api is None
+
+        async with app.run_test() as pilot:
+            await pilot.click("#push")
+            await pilot.pause()
+            assert isinstance(app.screen, TokenInputScreen)
+
+            cancel_btn = app.screen.query_one("#cancel-token")
+            cancel_btn.focus()
+            await pilot.pause()
+            await pilot.press("enter")
+            await pilot.pause()
+
+            assert isinstance(
+                app.screen, MainScreen
+            ), f"Expected MainScreen but got {type(app.screen).__name__}"
+            assert app.api is None
