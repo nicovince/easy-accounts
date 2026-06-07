@@ -150,6 +150,18 @@ def tmp_path_cwd(tmp_path):
     os.chdir(original_cwd)
 
 
+@pytest.fixture
+def kdrive_cfg(tmp_path_cwd):
+    """Create a .easy-account.toml with kdrive config in tmp_path_cwd."""
+    config_path = tmp_path_cwd / ".easy-account.toml"
+    config_content = """
+[kdrive]
+api_url = "https://api.infomaniak.com/2/drive/3615/files/1234"
+"""
+    config_path.write_text(config_content)
+    return str(config_path)
+
+
 def create_spreadsheet_template(filename: str) -> None:
     """Create a spreadsheet with both mono-user and multi-user sheets."""
     wb = Workbook()

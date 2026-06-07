@@ -408,15 +408,9 @@ class TestCliPushCmd:
         captured = capsys.readouterr()
         assert "Uploaded: test.xlsx" in captured.out
 
-    def test_push_with_api_url_from_config(self, tmp_path_cwd, capsys, monkeypatch):
+    def test_push_with_api_url_from_config(self, kdrive_cfg, tmp_path_cwd, capsys, monkeypatch):
         """Test push uses API URL from config when not provided as argument."""
         monkeypatch.setenv("IK_TOKEN", "test_token")
-        config_path = tmp_path_cwd / ".easy-account.toml"
-        config_content = """
-[kdrive]
-api_url = "https://api.infomaniak.com/2/drive/1475057/files/9"
-"""
-        config_path.write_text(config_content)
 
         test_file = tmp_path_cwd / "test.xlsx"
         test_file.write_bytes(b"test content")
@@ -440,7 +434,7 @@ api_url = "https://api.infomaniak.com/2/drive/1475057/files/9"
                 easy_account.cli.main()
             assert exc_info.value.code == 0
 
-            mock_api.get_file_info.assert_called_once_with(1475057, 9)
+            mock_api.get_file_info.assert_called_once_with(3615, 1234)
 
         captured = capsys.readouterr()
         assert "Uploaded: test.xlsx" in captured.out
