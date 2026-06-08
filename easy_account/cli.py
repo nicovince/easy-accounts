@@ -278,7 +278,7 @@ def cmd_insert(args):
         for report in args.report:
             (month, category, user) = parse_report_opt(report, args.month)
             cell, val = account_get_cell_value(account, month, category, user)
-            print(f"Show content of {cell}: {val}")
+            print(f"{month} / {category}: {val}")
 
 
 def main():

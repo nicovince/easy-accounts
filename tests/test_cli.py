@@ -12,9 +12,9 @@ import easy_account.cli
 
 class TestCli:
     @staticmethod
-    def assert_show(stdout, value):
+    def assert_show(stdout, month, category, value):
         """Assert that value is shown in stdout"""
-        expect = rf"Show content of <.*>: {value}"
+        expect = f"{month} / {category}: {value}"
         assert re.search(expect, stdout), f"Expected '{value}' to be shown in output:\n{stdout}"
 
 
@@ -465,7 +465,7 @@ class TestCliDefaultReportFromConfig:
 
         easy_account.cli.main()
         captured = capsys.readouterr()
-        assert "300" in captured.out
+        assert "janvier / out-bar: 300" in captured.out
 
     def test_default_report_from_config(self, spreadsheet, capsys, monkeypatch, tmp_path_cwd):
         """Test that default report from config is used when --report not specified."""
@@ -711,8 +711,8 @@ class TestCliShowCmd(TestCli):
         easy_account.cli.main()
         captured = capsys.readouterr()
         # out-foo has value 0, out-bar has value 1334 in test spreadsheet
-        self.assert_show(captured.out, 0)
-        self.assert_show(captured.out, 1334)
+        self.assert_show(captured.out, "janvier", "out-foo", 0)
+        self.assert_show(captured.out, "janvier", "out-bar", 1334)
 
     def test_cli_multiple_reports_from_config(self, spreadsheet, capsys, monkeypatch, tmp_path_cwd):
         """Test that multiple report values from config are used."""
@@ -746,8 +746,8 @@ report = ["janvier,out-foo", "janvier,out-bar"]
         easy_account.cli.main()
         captured = capsys.readouterr()
         # out-foo has value 0, out-bar has value 1334 in test spreadsheet
-        self.assert_show(captured.out, 0)
-        self.assert_show(captured.out, 1334)
+        self.assert_show(captured.out, "janvier", "out-foo", 0)
+        self.assert_show(captured.out, "janvier", "out-bar", 1334)
 
     def test_cli_report_overrides_config_multiple(
         self, spreadsheet, capsys, monkeypatch, tmp_path_cwd
@@ -784,6 +784,6 @@ report = ["janvier,out-foo", "fevrier,out-bar"]
 
         easy_account.cli.main()
         captured = capsys.readouterr()
-        self.assert_show(captured.out, 1334)
+        self.assert_show(captured.out, "janvier", "out-bar", 1334)
         # Should only report one value, not the config's two values
-        assert captured.out.count("Show content of") == 1
+        assert captured.out.count("janvier / out-bar") == 1
